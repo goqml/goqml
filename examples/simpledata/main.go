@@ -9,16 +9,16 @@ func main() {
 	engine := goqml.NewQQmlApplicationEngine()
 	defer engine.Delete()
 
-	var qVar1 = goqml.NewIntQVariant(10)
+	var qVar1 = goqml.NewQVariantInt(10)
 	defer qVar1.Delete()
 
-	var qVar2 = goqml.NewStringQVariant("Hello World")
+	var qVar2 = goqml.NewQVariantString("Hello World")
 	defer qVar2.Delete()
 
-	var qVar3 = goqml.NewBoolQVariant(false)
+	var qVar3 = goqml.NewQVariantBool(false)
 	defer qVar3.Delete()
 
-	var qVar4 = goqml.NewFloatQVariant(3.5)
+	var qVar4 = goqml.NewQVariantFloat(3.5)
 	defer qVar4.Delete()
 
 	engine.SetRootContextProperty("qVar1", qVar1)

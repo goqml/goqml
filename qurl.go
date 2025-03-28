@@ -1,16 +1,28 @@
 package goqml
 
+type QUrlParsingMode int
+
 const (
-	QUrlParsingModeTolerant = 0
-	QUrlParsingModeStrict   = 1
+	QUrlParsingModeTolerant QUrlParsingMode = 0
+	QUrlParsingModeStrict   QUrlParsingMode = 1
 )
 
 type QUrl struct {
 	vptr DosQUrl
 }
 
-func (qurl *QUrl) Setup(url string, mode int) {
-	qurl.vptr = dos.QUrlCreate(url, mode)
+func NewQUrl(url string) *QUrl {
+	return NewQUrlWithMode(url, QUrlParsingModeTolerant)
+}
+
+func NewQUrlWithMode(url string, mode QUrlParsingMode) *QUrl {
+	var qurl QUrl
+	qurl.Setup(url, mode)
+	return &qurl
+}
+
+func (qurl *QUrl) Setup(url string, mode QUrlParsingMode) {
+	qurl.vptr = dos.QUrlCreate(url, int(mode))
 }
 
 func (qurl *QUrl) Delete() {

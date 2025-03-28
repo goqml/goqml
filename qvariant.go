@@ -4,20 +4,24 @@ type QVariant struct {
 	vptr DosQVariant
 }
 
-func NewIntQVariant(v int) *QVariant {
+func NewQVariantInt(v int) *QVariant {
 	return &QVariant{vptr: dos.QVariantCreateInt(v)}
 }
 
-func NewStringQVariant(v string) *QVariant {
+func NewQVariantString(v string) *QVariant {
 	return &QVariant{vptr: dos.QVariantCreateString(v)}
 }
 
-func NewBoolQVariant(v bool) *QVariant {
+func NewQVariantBool(v bool) *QVariant {
 	return &QVariant{vptr: dos.QVariantCreateBool(v)}
 }
 
-func NewFloatQVariant(v float32) *QVariant {
+func NewQVariantFloat(v float32) *QVariant {
 	return &QVariant{vptr: dos.QVariantCreateFloat(v)}
+}
+
+func NewQVariantDouble(v float64) *QVariant {
+	return &QVariant{vptr: dos.QVariantCreateDouble(v)}
 }
 
 func (qvar *QVariant) Delete() {

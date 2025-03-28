@@ -18,7 +18,7 @@ var dos struct {
 	CharArrayDelete func(unsafe.Pointer) `purego:"dos_chararray_delete"`
 
 	// QCoreApplication
-	QCoreApplicationApplicationDirPath func() string `purego:"dos_qcoreapplication_application_dir_path"`
+	QCoreApplicationApplicationDirPath func() unsafe.Pointer `purego:"dos_qcoreapplication_application_dir_path"`
 
 	// QApplication
 	QApplicationCreate func() `purego:"dos_qapplication_create"`
@@ -190,6 +190,10 @@ func getSystemLibrary() []string {
 	switch runtime.GOOS {
 	case "windows":
 		return []string{"libDOtherSide.dll", "DOtherSide.dll"}
+	case "linux":
+		return []string{"libDOtherSide.so"}
+	case "darwin":
+		return []string{"libDOtherSide.dylib"}
 	default:
 		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
 	}

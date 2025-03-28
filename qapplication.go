@@ -15,6 +15,12 @@ func (app *QApplication) Setup() {
 	app.deleted = false
 }
 
+func (app *QApplication) ApplicationDirPath() string {
+	ptr := dos.QCoreApplicationApplicationDirPath()
+	defer dos.CharArrayDelete(ptr)
+	return charPtrToString(ptr)
+}
+
 func (app *QApplication) Exec() {
 	dos.QApplicationExec()
 }

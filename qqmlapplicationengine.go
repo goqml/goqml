@@ -12,7 +12,13 @@ type QQmlApplicationEngine struct {
 }
 
 func NewQQmlApplicationEngine() *QQmlApplicationEngine {
-	return &QQmlApplicationEngine{vptr: dos.QQmlApplicationEngineCreate()}
+	var engine QQmlApplicationEngine
+	engine.Setup()
+	return &engine
+}
+
+func (engine *QQmlApplicationEngine) Setup() {
+	engine.vptr = dos.QQmlApplicationEngineCreate()
 }
 
 func (engine *QQmlApplicationEngine) Load(filename string) {
@@ -24,6 +30,18 @@ func (engine *QQmlApplicationEngine) Load(filename string) {
 	dos.QQmlApplicationEngineLoad(engine.vptr, filepath.Join(dirname, filename))
 }
 
+func (engine *QQmlApplicationEngine) LoadUrl(url *QUrl) {
+	dos.QQmlApplicationEngineLoadUrl(engine.vptr, url.vptr)
+}
+
+func (engine *QQmlApplicationEngine) LoadData(data string) {
+	dos.QQmlApplicationEngineLoadData(engine.vptr, data)
+}
+
+func (engine *QQmlApplicationEngine) addImportPath(path string) {
+	dos.QQmlApplicationEngineAddImportPath(engine.vptr, path)
+}
+
 func (engine *QQmlApplicationEngine) SetRootContextProperty(name string, value *QVariant) {
 	ctx := dos.QQmlApplicationEngineContext(engine.vptr)
 	dos.DosQQmlContextSetContextProperty(ctx, name, value.vptr)
@@ -32,36 +50,3 @@ func (engine *QQmlApplicationEngine) SetRootContextProperty(name string, value *
 func (engine *QQmlApplicationEngine) Delete() {
 	dos.QQmlApplicationEngineDelete(engine.vptr)
 }
-
-// proc setup*(self: QQmlApplicationEngine) =
-//   ## Setup a QQmlApplicationEngine
-//   self.vptr = dos_qqmlapplicationengine_create()
-
-// proc loadData*(self: QQmlApplicationEngine, data: string) =
-//   ## Load the given data
-//   dos_qqmlapplicationengine_load_data(self.vptr, data.cstring)
-
-// proc load*(self: QQmlApplicationEngine, filename: string) =
-//   ## Load the given Qml file
-//   dos_qqmlapplicationengine_load(self.vptr, filename.cstring)
-
-// proc load*(self: QQmlApplicationEngine, url: QUrl) =
-//   ## Load the given Qml file
-//   dos_qqmlapplicationengine_load_url(self.vptr, url.vptr)
-
-// proc addImportPath*(self: QQmlApplicationEngine, path: string) =
-//   ## Add an import path
-//   dos_qqmlapplicationengine_add_import_path(self.vptr, path.cstring)
-
-// proc setRootContextProperty*(self: QQmlApplicationEngine, name: string, value: QVariant) =
-//   ## Set a root context property
-//   let context = dos_qqmlapplicationengine_context(self.vptr)
-//   dos_qqmlcontext_setcontextproperty(context, name.cstring, value.vptr)
-
-// proc delete*(self: QQmlApplicationEngine) =
-//   ## Delete the given QQmlApplicationEngine
-//   debugMsg("QQmlApplicationEngine", "delete")
-//   if self.vptr.isNil:
-//     return
-//   dos_qqmlapplicationengine_delete(self.vptr)
-//   self.vptr.resetToNil
