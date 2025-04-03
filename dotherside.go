@@ -5,15 +5,62 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/ebitengine/purego"
 	"github.com/shapled/puregostruct"
 )
 
 type (
-	DosQUrl     unsafe.Pointer
-	DosQVariant unsafe.Pointer
+	DosQMetaObject   unsafe.Pointer
+	DosQObject       unsafe.Pointer
+	DosQUrl          unsafe.Pointer
+	DosQVariant      unsafe.Pointer
+	DosQVariantArray DosQVariant // []DosQVariant
+
+	DosQObjectCallBack func(purego.CDecl, unsafe.Pointer, DosQVariant, int, DosQVariantArray) uintptr
+
+	DosParameterDefinition struct {
+		name     unsafe.Pointer
+		metaType int
+	}
+
+	DosSignalDefinition struct {
+		name            unsafe.Pointer
+		parametersCount int
+		parameters      unsafe.Pointer // []DosParameterDefinition
+	}
+
+	DosSlotDefinition struct {
+		name            unsafe.Pointer
+		returnMetaType  int
+		parametersCount int
+		parameters      unsafe.Pointer // []DosParameterDefinition
+	}
+
+	DosPropertyDefinition struct {
+		name             unsafe.Pointer
+		propertyMetaType int
+		readSlot         unsafe.Pointer
+		writeSlot        unsafe.Pointer
+		notifySignal     unsafe.Pointer
+	}
+
+	DosSignalDefinitions struct {
+		count       int
+		definitions unsafe.Pointer
+	}
+
+	DosSlotDefinitions struct {
+		count       int
+		definitions unsafe.Pointer
+	}
+
+	DosPropertyDefinitions struct {
+		count       int
+		definitions unsafe.Pointer
+	}
 )
 
-var dos struct {
+type Dos struct {
 	// CharArray
 	CharArrayDelete func(unsafe.Pointer) `purego:"dos_chararray_delete"`
 
@@ -45,55 +92,55 @@ var dos struct {
 	QQmlApplicationEngineDelete        func(unsafe.Pointer)                `purego:"dos_qqmlapplicationengine_delete"`
 
 	// QVariant
-	QVariantCreate         func() DosQVariant                `purego:"dos_qvariant_create"`
-	QVariantCreateInt      func(int) DosQVariant             `purego:"dos_qvariant_create_int"`
-	QVariantCreateBool     func(bool) DosQVariant            `purego:"dos_qvariant_create_bool"`
-	QVariantCreateString   func(string) DosQVariant          `purego:"dos_qvariant_create_string"`
-	QVariantCreateQObject  func(unsafe.Pointer) DosQVariant  `purego:"dos_qvariant_create_qobject"`
-	QVariantCreateQVariant func(unsafe.Pointer) DosQVariant  `purego:"dos_qvariant_create_qvariant"`
-	QVariantCreateFloat    func(float32) DosQVariant         `purego:"dos_qvariant_create_float"`
-	QVariantCreateDouble   func(float64) DosQVariant         `purego:"dos_qvariant_create_double"`
-	QVariantDelete         func(DosQVariant)                 `purego:"dos_qvariant_delete"`
-	QVariantIsNull         func(DosQVariant) bool            `purego:"dos_qvariant_isnull"`
-	QVariantToInt          func(DosQVariant) int             `purego:"dos_qvariant_toInt"`
-	QVariantToBool         func(DosQVariant) bool            `purego:"dos_qvariant_toBool"`
-	QVariantToString       func(DosQVariant) string          `purego:"dos_qvariant_toString"`
-	QVariantToDouble       func(DosQVariant) float64         `purego:"dos_qvariant_toDouble"`
-	QVariantToFloat        func(DosQVariant) float32         `purego:"dos_qvariant_toFloat"`
-	QVariantSetInt         func(DosQVariant, int32)          `purego:"dos_qvariant_setInt"`
-	QVariantSetBool        func(DosQVariant, bool)           `purego:"dos_qvariant_setBool"`
-	QVariantSetString      func(DosQVariant, string)         `purego:"dos_qvariant_setString"`
-	QVariantAssign         func(DosQVariant, unsafe.Pointer) `purego:"dos_qvariant_assign"`
-	QVariantSetFloat       func(DosQVariant, float32)        `purego:"dos_qvariant_setFloat"`
-	QVariantSetDouble      func(DosQVariant, float64)        `purego:"dos_qvariant_setDouble"`
-	QVariantSetQObject     func(DosQVariant, unsafe.Pointer) `purego:"dos_qvariant_setQObject"`
+	QVariantCreate         func() DosQVariant               `purego:"dos_qvariant_create"`
+	QVariantCreateInt      func(int) DosQVariant            `purego:"dos_qvariant_create_int"`
+	QVariantCreateBool     func(bool) DosQVariant           `purego:"dos_qvariant_create_bool"`
+	QVariantCreateString   func(string) DosQVariant         `purego:"dos_qvariant_create_string"`
+	QVariantCreateQObject  func(DosQObject) DosQVariant     `purego:"dos_qvariant_create_qobject"`
+	QVariantCreateQVariant func(DosQVariant) DosQVariant    `purego:"dos_qvariant_create_qvariant"`
+	QVariantCreateFloat    func(float32) DosQVariant        `purego:"dos_qvariant_create_float"`
+	QVariantCreateDouble   func(float64) DosQVariant        `purego:"dos_qvariant_create_double"`
+	QVariantDelete         func(DosQVariant)                `purego:"dos_qvariant_delete"`
+	QVariantIsNull         func(DosQVariant) bool           `purego:"dos_qvariant_isnull"`
+	QVariantToInt          func(DosQVariant) int            `purego:"dos_qvariant_toInt"`
+	QVariantToBool         func(DosQVariant) bool           `purego:"dos_qvariant_toBool"`
+	QVariantToString       func(DosQVariant) unsafe.Pointer `purego:"dos_qvariant_toString"`
+	QVariantToDouble       func(DosQVariant) float64        `purego:"dos_qvariant_toDouble"`
+	QVariantToFloat        func(DosQVariant) float32        `purego:"dos_qvariant_toFloat"`
+	QVariantSetInt         func(DosQVariant, int32)         `purego:"dos_qvariant_setInt"`
+	QVariantSetBool        func(DosQVariant, bool)          `purego:"dos_qvariant_setBool"`
+	QVariantSetString      func(DosQVariant, string)        `purego:"dos_qvariant_setString"`
+	QVariantAssign         func(DosQVariant, DosQVariant)   `purego:"dos_qvariant_assign"`
+	QVariantSetFloat       func(DosQVariant, float32)       `purego:"dos_qvariant_setFloat"`
+	QVariantSetDouble      func(DosQVariant, float64)       `purego:"dos_qvariant_setDouble"`
+	QVariantSetQObject     func(DosQVariant, DosQObject)    `purego:"dos_qvariant_setQObject"`
 
 	// QObject
-	QObjectQMetaObject                    func() unsafe.Pointer                                                                              `purego:"dos_qobject_qmetaobject"`
-	QObjectCreate                         func(unsafe.Pointer, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer                                `purego:"dos_qobject_create"`
-	QObjectObjectName                     func(unsafe.Pointer) string                                                                        `purego:"dos_qobject_objectName"`
-	QObjectSetObjectName                  func(unsafe.Pointer, string)                                                                       `purego:"dos_qobject_setObjectName"`
-	QObjectSignalEmit                     func(unsafe.Pointer, string, int32, unsafe.Pointer)                                                `purego:"dos_qobject_signal_emit"`
-	QObjectConnectStatic                  func(unsafe.Pointer, string, unsafe.Pointer, string, int32) unsafe.Pointer                         `purego:"dos_qobject_connect_static"`
-	QObjectConnectLambdaStatic            func(unsafe.Pointer, string, unsafe.Pointer, unsafe.Pointer, int32) unsafe.Pointer                 `purego:"dos_qobject_connect_lambda_static"`
-	QObjectConnectLambdaWithContextStatic func(unsafe.Pointer, string, unsafe.Pointer, unsafe.Pointer, unsafe.Pointer, int32) unsafe.Pointer `purego:"dos_qobject_connect_lambda_with_context_static"`
-	QObjectDisconnectStatic               func(unsafe.Pointer, string, unsafe.Pointer, string)                                               `purego:"dos_qobject_disconnect_static"`
-	QObjectDisconnectWithConnectionStatic func(unsafe.Pointer)                                                                               `purego:"dos_qobject_disconnect_with_connection_static"`
-	QObjectDelete                         func(unsafe.Pointer)                                                                               `purego:"dos_qobject_delete"`
-	QObjectDeleteLater                    func(unsafe.Pointer)                                                                               `purego:"dos_qobject_deleteLater"`
-	SignalMacro                           func(string) string                                                                                `purego:"dos_signal_macro"`
-	SlotMacro                             func(string) string                                                                                `purego:"dos_slot_macro"`
+	QObjectQMetaObject                    func() DosQMetaObject                                                                      `purego:"dos_qobject_qmetaobject"`
+	QObjectCreate                         func(unsafe.Pointer, DosQMetaObject, DosQObjectCallBack) DosQObject                        `purego:"dos_qobject_create"`
+	QObjectObjectName                     func(DosQObject) string                                                                    `purego:"dos_qobject_objectName"`
+	QObjectSetObjectName                  func(DosQObject, string)                                                                   `purego:"dos_qobject_setObjectName"`
+	QObjectSignalEmit                     func(DosQObject, string, int32, DosQVariantArray)                                          `purego:"dos_qobject_signal_emit"`
+	QObjectConnectStatic                  func(DosQObject, string, DosQObject, string, int32) unsafe.Pointer                         `purego:"dos_qobject_connect_static"`
+	QObjectConnectLambdaStatic            func(DosQObject, string, unsafe.Pointer, unsafe.Pointer, int32) unsafe.Pointer             `purego:"dos_qobject_connect_lambda_static"`
+	QObjectConnectLambdaWithContextStatic func(DosQObject, string, DosQObject, unsafe.Pointer, unsafe.Pointer, int32) unsafe.Pointer `purego:"dos_qobject_connect_lambda_with_context_static"`
+	QObjectDisconnectStatic               func(DosQObject, string, unsafe.Pointer, string)                                           `purego:"dos_qobject_disconnect_static"`
+	QObjectDisconnectWithConnectionStatic func(unsafe.Pointer)                                                                       `purego:"dos_qobject_disconnect_with_connection_static"`
+	QObjectDelete                         func(DosQObject)                                                                           `purego:"dos_qobject_delete"`
+	QObjectDeleteLater                    func(DosQObject)                                                                           `purego:"dos_qobject_deleteLater"`
+	SignalMacro                           func(string) string                                                                        `purego:"dos_signal_macro"`
+	SlotMacro                             func(string) string                                                                        `purego:"dos_slot_macro"`
 
 	// QMetaObject::Connection
-	// QMetaObjectConnectionDelete func(unsafe.Pointer) `purego:"dos_qmetaobject_connection_delete"`
+	QMetaObjectConnectionDelete func(unsafe.Pointer) `purego:"dos_qmetaobject_connection_delete"`
 
 	// QAbstractItemModel
-	QAbstractItemModelQMetaObject func() unsafe.Pointer `purego:"dos_qabstractitemmodel_qmetaobject"`
+	QAbstractItemModelQMetaObject func() DosQMetaObject `purego:"dos_qabstractitemmodel_qmetaobject"`
 
 	// QMetaObject
-	QMetaObjectCreate       func(unsafe.Pointer, string, unsafe.Pointer, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qmetaobject_create"`
-	QMetaObjectDelete       func(unsafe.Pointer)                                                                        `purego:"dos_qmetaobject_delete"`
-	QMetaObjectInvokeMethod func(unsafe.Pointer, unsafe.Pointer, unsafe.Pointer, int) bool                              `purego:"dos_qmetaobject_invoke_method"`
+	QMetaObjectCreate       func(DosQMetaObject, string, unsafe.Pointer, unsafe.Pointer, unsafe.Pointer) DosQMetaObject `purego:"dos_qmetaobject_create"`
+	QMetaObjectDelete       func(DosQMetaObject)                                                                        `purego:"dos_qmetaobject_delete"`
+	QMetaObjectInvokeMethod func(DosQObject, unsafe.Pointer, unsafe.Pointer, int) bool                                  `purego:"dos_qmetaobject_invoke_method"`
 
 	// QUrl
 	QUrlCreate   func(string, int) DosQUrl    `purego:"dos_qurl_create"`
@@ -128,7 +175,7 @@ var dos struct {
 	QModelIndexInternalPointer   func(unsafe.Pointer) unsafe.Pointer               `purego:"dos_qmodelindex_internalPointer"`
 
 	// QAbstractItemModel
-	QAbstractItemModelCreate             func(unsafe.Pointer, unsafe.Pointer, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstractitemmodel_create"`
+	QAbstractItemModelCreate             func(unsafe.Pointer, DosQMetaObject, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstractitemmodel_create"`
 	QAbstractItemModelBeginInsertRows    func(unsafe.Pointer, unsafe.Pointer, int32, int32)                                  `purego:"dos_qabstractitemmodel_beginInsertRows"`
 	QAbstractItemModelEndInsertRows      func(unsafe.Pointer)                                                                `purego:"dos_qabstractitemmodel_endInsertRows"`
 	QAbstractItemModelBeginRemoveRows    func(unsafe.Pointer, unsafe.Pointer, int32, int32)                                  `purego:"dos_qabstractitemmodel_beginRemoveRows"`
@@ -154,15 +201,15 @@ var dos struct {
 	QDeclarativeQmlRegisterSingletonType func(unsafe.Pointer) int32 `purego:"dos_qdeclarative_qmlregistersingletontype"`
 
 	// QAbstractListModel
-	QAbstractListModelQMetaObject func() unsafe.Pointer                                                               `purego:"dos_qabstractlistmodel_qmetaobject"`
-	QAbstractListModelCreate      func(unsafe.Pointer, unsafe.Pointer, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstractlistmodel_create"`
+	QAbstractListModelQMetaObject func() DosQMetaObject                                                               `purego:"dos_qabstractlistmodel_qmetaobject"`
+	QAbstractListModelCreate      func(unsafe.Pointer, DosQMetaObject, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstractlistmodel_create"`
 	QAbstractListModelColumnCount func(unsafe.Pointer, unsafe.Pointer) int32                                          `purego:"dos_qabstractlistmodel_columnCount"`
 	QAbstractListModelParent      func(unsafe.Pointer, unsafe.Pointer) unsafe.Pointer                                 `purego:"dos_qabstractlistmodel_parent"`
 	QAbstractListModelIndex       func(unsafe.Pointer, int32, int32, unsafe.Pointer) unsafe.Pointer                   `purego:"dos_qabstractlistmodel_index"`
 
 	// QAbstractTableModel
-	QAbstractTableModelQMetaObject func() unsafe.Pointer                                                               `purego:"dos_qabstracttablemodel_qmetaobject"`
-	QAbstractTableModelCreate      func(unsafe.Pointer, unsafe.Pointer, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstracttablemodel_create"`
+	QAbstractTableModelQMetaObject func() DosQMetaObject                                                               `purego:"dos_qabstracttablemodel_qmetaobject"`
+	QAbstractTableModelCreate      func(unsafe.Pointer, DosQMetaObject, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstracttablemodel_create"`
 	QAbstractTableModelParent      func(unsafe.Pointer, unsafe.Pointer) unsafe.Pointer                                 `purego:"dos_qabstracttablemodel_parent"`
 	QAbstractTableModelIndex       func(unsafe.Pointer, int32, int32, unsafe.Pointer) unsafe.Pointer                   `purego:"dos_qabstracttablemodel_index"`
 }
@@ -186,6 +233,23 @@ func charPtrToString(ptr unsafe.Pointer) string {
 	return string(bs)
 }
 
+func stringToCharPtr(s string) unsafe.Pointer {
+	bs := []byte(s + "\x00")
+	return unsafe.Pointer(&bs[0])
+}
+
+func sliceToPtr[T any](arr []T) unsafe.Pointer {
+	if len(arr) == 0 {
+		return nil
+	}
+	return unsafe.Pointer(&arr[0])
+}
+
+func cArrayIndex[Elem any, T ~unsafe.Pointer](array T, index int) T {
+	var elem Elem
+	return (T)(unsafe.Pointer(uintptr(array) + uintptr(index)*unsafe.Sizeof(elem)))
+}
+
 func getSystemLibrary() []string {
 	switch runtime.GOOS {
 	case "windows":
@@ -199,6 +263,8 @@ func getSystemLibrary() []string {
 	}
 }
 
-func init() {
+var dos *Dos = func() *Dos {
+	var dos Dos
 	puregostruct.LoadLibrary(&dos, getSystemLibrary()...)
-}
+	return &dos
+}()

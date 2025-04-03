@@ -24,6 +24,27 @@ func NewQVariantDouble(v float64) *QVariant {
 	return &QVariant{vptr: dos.QVariantCreateDouble(v)}
 }
 
+func NewQVariantFrom(value DosQVariant, takeOwnership Ownership) *QVariant {
+	switch takeOwnership {
+	case OwnershipTake:
+		return &QVariant{vptr: value}
+	case OwnershipClone:
+		return &QVariant{vptr: dos.QVariantCreateQVariant(value)}
+	default:
+		panic("invalid ownership")
+	}
+}
+
+func NewQVariantQObject(obj IQObject) *QVariant {
+	return &QVariant{vptr: dos.QVariantCreateQObject(obj.qObjectVPtr())}
+}
+
 func (qvar *QVariant) Delete() {
 	dos.QVariantDelete(qvar.vptr)
+}
+
+func (qvar *QVariant) StringVal() string {
+	ptr := dos.QVariantToString(qvar.vptr)
+	defer dos.CharArrayDelete(ptr)
+	return charPtrToString(ptr)
 }
