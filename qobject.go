@@ -6,13 +6,21 @@ import (
 	"github.com/ebitengine/purego"
 )
 
+type (
+	Ownership int
+)
+
+const (
+	OwnershipTake Ownership = iota
+	OwnershipClone
+)
+
 var (
-	rootMetaObjectInstance = NewQObjectMetaObject()
+	RootMetaObject = NewQObjectMetaObject()
 )
 
 type IQObject interface {
 	qObjectVPtr() DosQObject
-	OnSlotCalled(string, []*QVariant)
 }
 
 type QObject struct {
@@ -21,9 +29,9 @@ type QObject struct {
 	meta  *QMetaObject
 }
 
-func NewQObject() *QObject {
+func NewQObject(meta *QMetaObject) *QObject {
 	var obj QObject
-	obj.Setup()
+	obj.Setup(meta)
 	return &obj
 }
 
@@ -31,9 +39,14 @@ func (obj *QObject) MetaObject() *QMetaObject {
 	return obj.meta
 }
 
-func (obj *QObject) Setup() {
+func (obj *QObject) Setup(meta *QMetaObject) {
 	obj.owner = true
-	obj.vptr = dos.QObjectCreate(unsafe.Pointer(&obj), rootMetaObjectInstance.vptr, DosQObjectCallBack(qobjectCallback))
+	obj.meta = meta
+	obj.vptr = dos.QObjectCreate(unsafe.Pointer(obj), meta.vptr, DosQObjectCallBack(qobjectCallback))
+}
+
+func (obj *QObject) SetMeta(meta *QMetaObject) {
+	obj.meta = meta
 }
 
 func (obj *QObject) Delete() {
@@ -48,18 +61,33 @@ func (obj *QObject) qObjectVPtr() DosQObject {
 	return obj.vptr
 }
 
-func (obj *QObject) OnSlotCalled(slotName string, arguments []*QVariant) {}
+func (obj *QObject) Emit(signalName string, arguments ...*QVariant) {
+	dosArguments := []DosQVariant{}
+	for _, argument := range arguments {
+		dosArguments = append(dosArguments, argument.vptr)
+	}
+	dos.QObjectSignalEmit(obj.vptr, signalName, len(dosArguments), DosQVariantArray(sliceToPtr(dosArguments)))
+}
+
+func (obj *QObject) DeleteLater() {
+	if !obj.owner || obj.vptr == nil {
+		return
+	}
+	dos.QObjectDeleteLater(obj.vptr)
+	obj.vptr = nil
+}
 
 func toQVariantSequence(qs DosQVariantArray, length int, takeOwnership Ownership) []*QVariant {
 	var result []*QVariant
+	qSlice := unsafe.Slice((*uintptr)(qs), length)
 	for i := 0; i < length; i++ {
-		result = append(result, NewQVariantFrom(DosQVariant(cArrayIndex[unsafe.Pointer](qs, i)), takeOwnership))
+		result = append(result, NewQVariantFrom(DosQVariant(qSlice[i]), takeOwnership))
 	}
 	return result
 }
 
 func qobjectCallback(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) uintptr {
-	obj := (*IQObject)(ptr)
+	obj := (*QObject)(ptr)
 
 	slotName := NewQVariantFrom(slotNamePtr, OwnershipClone)
 	defer slotName.Delete()
@@ -71,9 +99,10 @@ func qobjectCallback(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant
 		}
 	}()
 
-	(*obj).OnSlotCalled(slotName.StringVal(), arguments)
+	obj.MetaObject().OnSlotCalled(slotName.StringVal(), arguments)
 
-	dos.QVariantAssign(DosQVariant(dosArguments) /*dosArguments[0]*/, arguments[0].vptr)
+	dosArgs := unsafe.Slice((*uintptr)(dosArguments), dosArgumentsLength)
+	dos.QVariantAssign(DosQVariant(dosArgs[0]), arguments[0].vptr)
 	return 0
 }
 

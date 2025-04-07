@@ -1,10 +1,14 @@
 package goqml
 
+import "runtime"
+
 type QApplication struct {
 	deleted bool
 }
 
 func NewQApplication() *QApplication {
+	runtime.LockOSThread()
+
 	app := &QApplication{}
 	app.Setup()
 	return app
@@ -35,4 +39,6 @@ func (app *QApplication) Delete() {
 	}
 	dos.QApplicationDelete()
 	app.deleted = true
+
+	runtime.UnlockOSThread()
 }

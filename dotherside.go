@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/shapled/puregostruct"
 )
 
@@ -14,48 +15,48 @@ type (
 	DosQObject       unsafe.Pointer
 	DosQUrl          unsafe.Pointer
 	DosQVariant      unsafe.Pointer
-	DosQVariantArray DosQVariant // []DosQVariant
+	DosQVariantArray unsafe.Pointer // []DosQVariant
 
 	DosQObjectCallBack func(purego.CDecl, unsafe.Pointer, DosQVariant, int, DosQVariantArray) uintptr
 
 	DosParameterDefinition struct {
 		name     unsafe.Pointer
-		metaType int
+		metaType int32
 	}
 
 	DosSignalDefinition struct {
 		name            unsafe.Pointer
-		parametersCount int
+		parametersCount int32
 		parameters      unsafe.Pointer // []DosParameterDefinition
 	}
 
 	DosSlotDefinition struct {
 		name            unsafe.Pointer
-		returnMetaType  int
-		parametersCount int
+		returnMetaType  int32
+		parametersCount int32
 		parameters      unsafe.Pointer // []DosParameterDefinition
 	}
 
 	DosPropertyDefinition struct {
 		name             unsafe.Pointer
-		propertyMetaType int
+		propertyMetaType int32
 		readSlot         unsafe.Pointer
 		writeSlot        unsafe.Pointer
 		notifySignal     unsafe.Pointer
 	}
 
 	DosSignalDefinitions struct {
-		count       int
+		count       int32
 		definitions unsafe.Pointer
 	}
 
 	DosSlotDefinitions struct {
-		count       int
+		count       int32
 		definitions unsafe.Pointer
 	}
 
 	DosPropertyDefinitions struct {
-		count       int
+		count       int32
 		definitions unsafe.Pointer
 	}
 )
@@ -107,7 +108,7 @@ type Dos struct {
 	QVariantToString       func(DosQVariant) unsafe.Pointer `purego:"dos_qvariant_toString"`
 	QVariantToDouble       func(DosQVariant) float64        `purego:"dos_qvariant_toDouble"`
 	QVariantToFloat        func(DosQVariant) float32        `purego:"dos_qvariant_toFloat"`
-	QVariantSetInt         func(DosQVariant, int32)         `purego:"dos_qvariant_setInt"`
+	QVariantSetInt         func(DosQVariant, int)           `purego:"dos_qvariant_setInt"`
 	QVariantSetBool        func(DosQVariant, bool)          `purego:"dos_qvariant_setBool"`
 	QVariantSetString      func(DosQVariant, string)        `purego:"dos_qvariant_setString"`
 	QVariantAssign         func(DosQVariant, DosQVariant)   `purego:"dos_qvariant_assign"`
@@ -120,7 +121,7 @@ type Dos struct {
 	QObjectCreate                         func(unsafe.Pointer, DosQMetaObject, DosQObjectCallBack) DosQObject                        `purego:"dos_qobject_create"`
 	QObjectObjectName                     func(DosQObject) string                                                                    `purego:"dos_qobject_objectName"`
 	QObjectSetObjectName                  func(DosQObject, string)                                                                   `purego:"dos_qobject_setObjectName"`
-	QObjectSignalEmit                     func(DosQObject, string, int32, DosQVariantArray)                                          `purego:"dos_qobject_signal_emit"`
+	QObjectSignalEmit                     func(DosQObject, string, int, DosQVariantArray)                                            `purego:"dos_qobject_signal_emit"`
 	QObjectConnectStatic                  func(DosQObject, string, DosQObject, string, int32) unsafe.Pointer                         `purego:"dos_qobject_connect_static"`
 	QObjectConnectLambdaStatic            func(DosQObject, string, unsafe.Pointer, unsafe.Pointer, int32) unsafe.Pointer             `purego:"dos_qobject_connect_lambda_static"`
 	QObjectConnectLambdaWithContextStatic func(DosQObject, string, DosQObject, unsafe.Pointer, unsafe.Pointer, int32) unsafe.Pointer `purego:"dos_qobject_connect_lambda_with_context_static"`
@@ -138,9 +139,9 @@ type Dos struct {
 	QAbstractItemModelQMetaObject func() DosQMetaObject `purego:"dos_qabstractitemmodel_qmetaobject"`
 
 	// QMetaObject
-	QMetaObjectCreate       func(DosQMetaObject, string, unsafe.Pointer, unsafe.Pointer, unsafe.Pointer) DosQMetaObject `purego:"dos_qmetaobject_create"`
-	QMetaObjectDelete       func(DosQMetaObject)                                                                        `purego:"dos_qmetaobject_delete"`
-	QMetaObjectInvokeMethod func(DosQObject, unsafe.Pointer, unsafe.Pointer, int) bool                                  `purego:"dos_qmetaobject_invoke_method"`
+	QMetaObjectCreate       func(DosQMetaObject, string, *DosSignalDefinitions, *DosSlotDefinitions, *DosPropertyDefinitions) DosQMetaObject `purego:"dos_qmetaobject_create"`
+	QMetaObjectDelete       func(DosQMetaObject)                                                                                             `purego:"dos_qmetaobject_delete"`
+	QMetaObjectInvokeMethod func(DosQObject, unsafe.Pointer, unsafe.Pointer, int) bool                                                       `purego:"dos_qmetaobject_invoke_method"`
 
 	// QUrl
 	QUrlCreate   func(string, int) DosQUrl    `purego:"dos_qurl_create"`
@@ -233,9 +234,19 @@ func charPtrToString(ptr unsafe.Pointer) string {
 	return string(bs)
 }
 
+var cache cmap.ConcurrentMap[uintptr, []byte] = cmap.NewWithCustomShardingFunction[uintptr, []byte](func(key uintptr) uint32 {
+	return uint32(key % 8)
+})
+
 func stringToCharPtr(s string) unsafe.Pointer {
 	bs := []byte(s + "\x00")
+	ptr := unsafe.Pointer(&bs[0])
+	cache.Set(uintptr(ptr), bs)
 	return unsafe.Pointer(&bs[0])
+}
+
+func releaseBytes() {
+	cache.Clear()
 }
 
 func sliceToPtr[T any](arr []T) unsafe.Pointer {
@@ -245,9 +256,10 @@ func sliceToPtr[T any](arr []T) unsafe.Pointer {
 	return unsafe.Pointer(&arr[0])
 }
 
-func cArrayIndex[Elem any, T ~unsafe.Pointer](array T, index int) T {
-	var elem Elem
-	return (T)(unsafe.Pointer(uintptr(array) + uintptr(index)*unsafe.Sizeof(elem)))
+func ptrArrayIndex(array unsafe.Pointer, index int) unsafe.Pointer {
+	elemSize := unsafe.Sizeof(uintptr(0))
+	elemPtr := unsafe.Pointer(uintptr(array) + uintptr(index)*elemSize)
+	return unsafe.Pointer(*(**int)(elemPtr))
 }
 
 func getSystemLibrary() []string {

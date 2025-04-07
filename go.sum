@@ -1,4 +1,6 @@
 github.com/ebitengine/purego v0.8.2 h1:jPPGWs2sZ1UgOSgD2bClL0MJIqu58nOmIcBuXr62z1I=
 github.com/ebitengine/purego v0.8.2/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
+github.com/orcaman/concurrent-map/v2 v2.0.1 h1:jOJ5Pg2w1oeB6PeDurIYf6k9PQ+aTITr/6lP/L/zp6c=
+github.com/orcaman/concurrent-map/v2 v2.0.1/go.mod h1:9Eq3TG2oBe5FirmYWQfYO5iH1q0Jv47PLaNK++uCdOM=
 github.com/shapled/puregostruct v0.1.1 h1:jHxWQ3NvcHbHXBEfHaJPIP0NlTMrfo4RcNpRnq+BT0Q=
 github.com/shapled/puregostruct v0.1.1/go.mod h1:kCyITZTgZcnoiwMwxGku0xBYmU0PE6gYCq2stkXZxkU=

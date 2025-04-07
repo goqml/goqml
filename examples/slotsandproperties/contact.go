@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/shapled/goqml"
 )
 
@@ -13,12 +11,32 @@ type Contact struct {
 
 func NewContact() *Contact {
 	contact := &Contact{Name: "InitialName"}
-	contact.Setup()
+	contact.Setup(goqml.NewQMetaObject(
+		goqml.RootMetaObject,
+		"Contact",
+		nil,
+		nil,
+		[]*goqml.PropertyDefinition{
+			goqml.NewPropertyDefinition("name", contact.getNameSlot, contact.setNameSlot, contact.nameChangedSignal),
+		},
+	))
 	return contact
 }
 
-func (contact *Contact) OnSlotCalled(slotName string, arguments []*goqml.QVariant) {
-	fmt.Printf("slot called: %s, %#v", slotName, arguments)
+func (contact *Contact) getNameSlot() string {
+	return contact.Name
+}
+
+func (contact *Contact) setNameSlot(name string) {
+	if contact.Name == name {
+		return
+	}
+	contact.Name = name
+	contact.nameChangedSignal(name)
+}
+
+func (contact *Contact) nameChangedSignal(name string) {
+	contact.Emit("notify_name", goqml.NewQVariantString(name))
 }
 
 //   proc getName*(self: Contact): string {.slot.} =

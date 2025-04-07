@@ -39,6 +39,23 @@ func NewQVariantQObject(obj IQObject) *QVariant {
 	return &QVariant{vptr: dos.QVariantCreateQObject(obj.qObjectVPtr())}
 }
 
+func NewQVariant(value any) *QVariant {
+	switch value := value.(type) {
+	case int:
+		return NewQVariantInt(value)
+	case string:
+		return NewQVariantString(value)
+	case bool:
+		return NewQVariantBool(value)
+	case float32:
+		return NewQVariantFloat(value)
+	case float64:
+		return NewQVariantDouble(value)
+	default:
+		panic("invalid type")
+	}
+}
+
 func (qvar *QVariant) Delete() {
 	dos.QVariantDelete(qvar.vptr)
 }
@@ -47,4 +64,40 @@ func (qvar *QVariant) StringVal() string {
 	ptr := dos.QVariantToString(qvar.vptr)
 	defer dos.CharArrayDelete(ptr)
 	return charPtrToString(ptr)
+}
+
+func (qvar *QVariant) SetStringVal(value string) {
+	dos.QVariantSetString(qvar.vptr, value)
+}
+
+func (qvar *QVariant) IntVal() int {
+	return dos.QVariantToInt(qvar.vptr)
+}
+
+func (qvar *QVariant) SetIntVal(value int) {
+	dos.QVariantSetInt(qvar.vptr, value)
+}
+
+func (qvar *QVariant) BoolVal() bool {
+	return dos.QVariantToBool(qvar.vptr)
+}
+
+func (qvar *QVariant) SetBoolVal(value bool) {
+	dos.QVariantSetBool(qvar.vptr, value)
+}
+
+func (qvar *QVariant) FloatVal() float32 {
+	return dos.QVariantToFloat(qvar.vptr)
+}
+
+func (qvar *QVariant) SetFloatVal(value float32) {
+	dos.QVariantSetFloat(qvar.vptr, value)
+}
+
+func (qvar *QVariant) DoubleVal() float64 {
+	return dos.QVariantToDouble(qvar.vptr)
+}
+
+func (qvar *QVariant) SetDoubleVal(value float64) {
+	dos.QVariantSetDouble(qvar.vptr, value)
 }

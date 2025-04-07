@@ -1,16 +1,18 @@
 package main
 
-import "github.com/shapled/goqml"
+import (
+	"github.com/shapled/goqml"
+)
 
 func main() {
 	app := goqml.NewQApplication()
 	defer app.Delete()
 
-	contact := NewContact()
-	defer contact.Delete()
-
 	engine := goqml.NewQQmlApplicationEngine()
 	defer engine.Delete()
+
+	contact := NewContact()
+	defer contact.Delete()
 
 	variant := goqml.NewQVariantQObject(contact)
 	defer variant.Delete()
