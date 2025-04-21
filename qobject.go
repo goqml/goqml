@@ -1,6 +1,7 @@
 package goqml
 
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -19,37 +20,26 @@ var (
 	RootMetaObject = NewQObjectMetaObject()
 )
 
-type IQObject interface {
+type IQObjectReal interface {
 	qObjectVPtr() DosQObject
+	OnSlotCalled(slotName string, arguments []*QVariant)
 }
 
-type QObject struct {
+type QObject[T IQObjectReal] struct {
 	vptr  DosQObject
 	owner bool
-	meta  *QMetaObject
 }
 
-func NewQObject(meta *QMetaObject) *QObject {
-	var obj QObject
-	obj.Setup(meta)
-	return &obj
+func (obj *QObject[T]) StaticMetaObject() *QMetaObject {
+	return RootMetaObject
 }
 
-func (obj *QObject) MetaObject() *QMetaObject {
-	return obj.meta
-}
-
-func (obj *QObject) Setup(meta *QMetaObject) {
+func (obj *QObject[T]) Setup(inst T, meta *QMetaObject) {
 	obj.owner = true
-	obj.meta = meta
-	obj.vptr = dos.QObjectCreate(unsafe.Pointer(obj), meta.vptr, DosQObjectCallBack(qobjectCallback))
+	obj.vptr = dos.QObjectCreate(unsafe.Pointer(&inst), meta.vptr, DosQObjectCallBack(qobjectCallback[T]))
 }
 
-func (obj *QObject) SetMeta(meta *QMetaObject) {
-	obj.meta = meta
-}
-
-func (obj *QObject) Delete() {
+func (obj *QObject[T]) Delete() {
 	if obj.vptr == nil || !obj.owner {
 		return
 	}
@@ -57,11 +47,11 @@ func (obj *QObject) Delete() {
 	obj.vptr = nil
 }
 
-func (obj *QObject) qObjectVPtr() DosQObject {
+func (obj *QObject[T]) qObjectVPtr() DosQObject {
 	return obj.vptr
 }
 
-func (obj *QObject) Emit(signalName string, arguments ...*QVariant) {
+func (obj *QObject[T]) Emit(signalName string, arguments ...*QVariant) {
 	dosArguments := []DosQVariant{}
 	for _, argument := range arguments {
 		dosArguments = append(dosArguments, argument.vptr)
@@ -69,12 +59,16 @@ func (obj *QObject) Emit(signalName string, arguments ...*QVariant) {
 	dos.QObjectSignalEmit(obj.vptr, signalName, len(dosArguments), DosQVariantArray(sliceToPtr(dosArguments)))
 }
 
-func (obj *QObject) DeleteLater() {
+func (obj *QObject[T]) DeleteLater() {
 	if !obj.owner || obj.vptr == nil {
 		return
 	}
 	dos.QObjectDeleteLater(obj.vptr)
 	obj.vptr = nil
+}
+
+func (obj *QObject[T]) OnSlotCalled(slotName string, arguments []*QVariant) {
+	fmt.Println("ignore QObject slot:", slotName)
 }
 
 func toQVariantSequence(qs DosQVariantArray, length int, takeOwnership Ownership) []*QVariant {
@@ -86,8 +80,8 @@ func toQVariantSequence(qs DosQVariantArray, length int, takeOwnership Ownership
 	return result
 }
 
-func qobjectCallback(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) uintptr {
-	obj := (*QObject)(ptr)
+func qobjectCallback[T IQObjectReal](_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) uintptr {
+	obj := *(*T)(ptr)
 
 	slotName := NewQVariantFrom(slotNamePtr, OwnershipClone)
 	defer slotName.Delete()
@@ -99,7 +93,7 @@ func qobjectCallback(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant
 		}
 	}()
 
-	obj.MetaObject().OnSlotCalled(slotName.StringVal(), arguments)
+	obj.OnSlotCalled(slotName.StringVal(), arguments)
 
 	dosArgs := unsafe.Slice((*uintptr)(dosArguments), dosArgumentsLength)
 	dos.QVariantAssign(DosQVariant(dosArgs[0]), arguments[0].vptr)

@@ -19,14 +19,25 @@ func NewQMetaObject(
 	properties []*PropertyDefinition,
 ) *QMetaObject {
 	for _, property := range properties {
-		if property.read != nil {
-			slots = append(slots, property.read)
+		if property.Getter != "" {
+			slots = append(slots, &SlotDefinition{
+				Name:        property.Getter,
+				RetMetaType: property.MetaType,
+				Params:      []*ParameterDefinition{},
+			})
 		}
-		if property.write != nil {
-			slots = append(slots, property.write)
+		if property.Setter != "" {
+			slots = append(slots, &SlotDefinition{
+				Name:        property.Setter,
+				RetMetaType: QMetaTypeVoid,
+				Params:      []*ParameterDefinition{{MetaType: property.MetaType, Name: "value"}},
+			})
 		}
-		if property.notify != nil {
-			signals = append(signals, property.notify)
+		if property.Emitter != "" {
+			signals = append(signals, &SignalDefinition{
+				Name:   property.Emitter,
+				Params: []*ParameterDefinition{{MetaType: property.MetaType, Name: "value"}},
+			})
 		}
 	}
 
@@ -44,17 +55,17 @@ func (meta *QMetaObject) Setup(
 ) {
 	dosSignals := make([]DosSignalDefinition, 0)
 	for _, signal := range signals {
-		dosSignals = append(dosSignals, signal.ToDos())
+		dosSignals = append(dosSignals, signal.toDos())
 	}
 
 	dosSlots := make([]DosSlotDefinition, 0)
 	for _, slot := range slots {
-		dosSlots = append(dosSlots, slot.ToDos())
+		dosSlots = append(dosSlots, slot.toDos())
 	}
 
 	dosProperties := make([]DosPropertyDefinition, 0)
 	for _, property := range properties {
-		dosProperties = append(dosProperties, property.ToDos())
+		dosProperties = append(dosProperties, property.toDos())
 	}
 
 	meta.vptr = dos.QMetaObjectCreate(
@@ -66,13 +77,4 @@ func (meta *QMetaObject) Setup(
 	)
 
 	releaseBytes()
-}
-
-func (meta *QMetaObject) OnSlotCalled(slotName string, arguments []*QVariant) {
-	for _, slot := range meta.slots {
-		if slot.name == slotName {
-			(*QFunc)(slot).applyQVariants(arguments)
-			return
-		}
-	}
 }

@@ -35,7 +35,7 @@ func NewQVariantFrom(value DosQVariant, takeOwnership Ownership) *QVariant {
 	}
 }
 
-func NewQVariantQObject(obj IQObject) *QVariant {
+func NewQVariantQObject[T IQObjectReal](obj T) *QVariant {
 	return &QVariant{vptr: dos.QVariantCreateQObject(obj.qObjectVPtr())}
 }
 
@@ -100,4 +100,21 @@ func (qvar *QVariant) DoubleVal() float64 {
 
 func (qvar *QVariant) SetDoubleVal(value float64) {
 	dos.QVariantSetDouble(qvar.vptr, value)
+}
+
+func (qvar *QVariant) SetVal(value any) {
+	switch value := value.(type) {
+	case int:
+		qvar.SetIntVal(value)
+	case string:
+		qvar.SetStringVal(value)
+	case bool:
+		qvar.SetBoolVal(value)
+	case float32:
+		qvar.SetFloatVal(value)
+	case float64:
+		qvar.SetDoubleVal(value)
+	default:
+		panic("invalid type")
+	}
 }

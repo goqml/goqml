@@ -1,6 +1,6 @@
 module github.com/shapled/goqml
 
-go 1.18
+go 1.20
 
 require (
 	github.com/ebitengine/purego v0.8.2

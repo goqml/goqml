@@ -235,7 +235,7 @@ func charPtrToString(ptr unsafe.Pointer) string {
 }
 
 var cache cmap.ConcurrentMap[uintptr, []byte] = cmap.NewWithCustomShardingFunction[uintptr, []byte](func(key uintptr) uint32 {
-	return uint32(key % 8)
+	return uint32(key)
 })
 
 func stringToCharPtr(s string) unsafe.Pointer {
