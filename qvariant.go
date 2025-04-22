@@ -35,8 +35,8 @@ func NewQVariantFrom(value DosQVariant, takeOwnership Ownership) *QVariant {
 	}
 }
 
-func NewQVariantQObject[T IQObjectReal](obj T) *QVariant {
-	return &QVariant{vptr: dos.QVariantCreateQObject(obj.qObjectVPtr())}
+func NewQVariantQObject(obj IQObjectReal) *QVariant {
+	return &QVariant{vptr: dos.QVariantCreateQObject(obj.getVPtr())}
 }
 
 func NewQVariant(value any) *QVariant {

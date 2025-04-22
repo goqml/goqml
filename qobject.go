@@ -2,6 +2,7 @@ package goqml
 
 import (
 	"fmt"
+	"reflect"
 	"unsafe"
 
 	"github.com/ebitengine/purego"
@@ -21,8 +22,19 @@ var (
 )
 
 type IQObjectReal interface {
-	qObjectVPtr() DosQObject
+	getVPtr() DosQObject
+	setVPtr(vptr DosQObject)
+	setOwned(owned bool)
+	StaticMetaObject() *QMetaObject
 	OnSlotCalled(slotName string, arguments []*QVariant)
+}
+
+func ptrOfIQObjectReal(obj IQObjectReal) unsafe.Pointer {
+	val := reflect.ValueOf(obj)
+	if val.Kind() != reflect.Ptr {
+		panic("obj must be a pointer type")
+	}
+	return unsafe.Pointer(val.Pointer())
 }
 
 type QObject[T IQObjectReal] struct {
@@ -47,8 +59,16 @@ func (obj *QObject[T]) Delete() {
 	obj.vptr = nil
 }
 
-func (obj *QObject[T]) qObjectVPtr() DosQObject {
+func (obj *QObject[T]) getVPtr() DosQObject {
 	return obj.vptr
+}
+
+func (obj *QObject[T]) setVPtr(vptr DosQObject) {
+	obj.vptr = vptr
+}
+
+func (obj *QObject[T]) setOwned(owned bool) {
+	obj.owner = owned
 }
 
 func (obj *QObject[T]) Emit(signalName string, arguments ...*QVariant) {

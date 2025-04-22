@@ -11,11 +11,23 @@ import (
 )
 
 type (
+	QObjectStore     *uintptr
 	DosQMetaObject   unsafe.Pointer
 	DosQObject       unsafe.Pointer
+	DosQObjectStore  *uintptr
 	DosQUrl          unsafe.Pointer
 	DosQVariant      unsafe.Pointer
 	DosQVariantArray unsafe.Pointer // []DosQVariant
+
+	DosQmlRegisterType struct {
+		major            int32
+		minor            int32
+		uri              unsafe.Pointer
+		qml              unsafe.Pointer
+		staticMetaObject DosQMetaObject
+		createCallback   uintptr
+		deleteCallback   uintptr
+	}
 
 	DosQObjectCallBack func(purego.CDecl, unsafe.Pointer, DosQVariant, int, DosQVariantArray) uintptr
 
@@ -198,8 +210,8 @@ type Dos struct {
 	QResourceRegister func(string) `purego:"dos_qresource_register"`
 
 	// QDeclarative
-	QDeclarativeQmlRegisterType          func(unsafe.Pointer) int32 `purego:"dos_qdeclarative_qmlregistertype"`
-	QDeclarativeQmlRegisterSingletonType func(unsafe.Pointer) int32 `purego:"dos_qdeclarative_qmlregistersingletontype"`
+	QDeclarativeQmlRegisterType          func(*DosQmlRegisterType) int32 `purego:"dos_qdeclarative_qmlregistertype"`
+	QDeclarativeQmlRegisterSingletonType func(*DosQmlRegisterType) int32 `purego:"dos_qdeclarative_qmlregistersingletontype"`
 
 	// QAbstractListModel
 	QAbstractListModelQMetaObject func() DosQMetaObject                                                               `purego:"dos_qabstractlistmodel_qmetaobject"`
