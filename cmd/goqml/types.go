@@ -13,6 +13,7 @@ const (
 
 type StructDef struct {
 	Name       string
+	ParentType string
 	ParentName string
 	Slots      []*SlotDef
 	Signals    []*SignalDef
@@ -29,7 +30,7 @@ type SlotDef struct {
 
 type SignalDef struct {
 	StructName string
-	MethodName string
+	FieldName  string
 	Name       string
 	Params     []*ParamDef
 }

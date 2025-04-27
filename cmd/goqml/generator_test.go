@@ -13,7 +13,7 @@ func TestGenerateCodeContent(t *testing.T) {
 	structs := []*StructDef{
 		{
 			Name:       "TestStruct",
-			ParentName: "goqml.QObject",
+			ParentType: "goqml.QObject",
 			Slots: []*SlotDef{
 				{
 					Name:       "TestSlot",
@@ -23,9 +23,9 @@ func TestGenerateCodeContent(t *testing.T) {
 			},
 			Signals: []*SignalDef{
 				{
-					Name:       "TestSignal",
-					MethodName: "TestSignal",
-					Params:     []*ParamDef{{Name: "y", Type: "string"}},
+					Name:      "TestSignal",
+					FieldName: "TestSignal",
+					Params:    []*ParamDef{{Name: "y", Type: "string"}},
 				},
 			},
 			Properties: []*PropertyDef{
@@ -53,10 +53,9 @@ func TestGenerateCodeContent(t *testing.T) {
 	}
 
 	// 调用 generateCodeContent 生成代码内容
-	goContent, asmContent := generateCodeContent("testpkg", structs)
+	goContent := generateCodeContent("testpkg", structs)
 
 	fmt.Println(goContent)
-	fmt.Println(asmContent)
 
 	// 验证生成的 Go 代码内容
 	expectedGoKeywords := []string{
@@ -71,20 +70,6 @@ func TestGenerateCodeContent(t *testing.T) {
 	for _, keyword := range expectedGoKeywords {
 		if !strings.Contains(goContent, keyword) {
 			t.Errorf("Generated Go code does not contain expected keyword: %s", keyword)
-		}
-	}
-
-	// 验证生成的汇编代码内容
-	expectedAsmKeywords := []string{
-		"TEXT ·TestStruct·TestSignal(SB), NOSPLIT, $0-16",
-		"CALL ·TestStruct·goqmlTestSignal(SB)",
-		"TEXT ·TestStruct·TestPropertyChanged(SB), NOSPLIT, $0-16",
-		"CALL ·TestStruct·goqmlTestPropertyChanged(SB)",
-	}
-
-	for _, keyword := range expectedAsmKeywords {
-		if !strings.Contains(asmContent, keyword) {
-			t.Errorf("Generated assembly code does not contain expected keyword: %s", keyword)
 		}
 	}
 }

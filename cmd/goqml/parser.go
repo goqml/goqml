@@ -17,7 +17,11 @@ func parseStructs(node *ast.File) []*StructDef {
 		switch x := n.(type) {
 		case *ast.TypeSpec:
 			if structType, ok := x.Type.(*ast.StructType); ok {
-				structDef := &StructDef{Name: x.Name.Name, ParentName: fmt.Sprintf("goqml.QObject[*%s]", x.Name.Name)}
+				structDef := &StructDef{
+					Name:       x.Name.Name,
+					ParentType: fmt.Sprintf("goqml.QObject[*%s]", x.Name.Name),
+					ParentName: "QObject",
+				}
 				structMap[x.Name.Name] = structDef
 
 				// Find parent struct and parse properties
@@ -26,21 +30,24 @@ func parseStructs(node *ast.File) []*StructDef {
 					if !parentFound {
 						if len(field.Names) == 0 {
 							if ident, ok := field.Type.(*ast.Ident); ok {
+								structDef.ParentType = ident.Name
 								structDef.ParentName = ident.Name
 								parentFound = true
 							} else if indexExpr, ok := field.Type.(*ast.IndexExpr); ok {
 								if ident, ok := indexExpr.X.(*ast.Ident); ok {
 									genericType := getTypeName(indexExpr.Index)
-									structDef.ParentName = fmt.Sprintf("%s[%s]", ident.Name, genericType)
+									structDef.ParentType = fmt.Sprintf("%s[%s]", ident.Name, genericType)
+									structDef.ParentName = ident.Name
 									parentFound = true
 								} else if selectorExpr, ok := indexExpr.X.(*ast.SelectorExpr); ok {
 									genericType := getTypeName(indexExpr.Index)
-									structDef.ParentName = fmt.Sprintf("%s.%s[%s]", getTypeName(selectorExpr.X), selectorExpr.Sel.Name, genericType)
+									structDef.ParentType = fmt.Sprintf("%s.%s[%s]", getTypeName(selectorExpr.X), selectorExpr.Sel.Name, genericType)
+									structDef.ParentName = selectorExpr.Sel.Name
 									parentFound = true
 								}
 							} else if selectorExpr, ok := field.Type.(*ast.SelectorExpr); ok {
-								// 新增：处理 SelectorExpr 类型
-								structDef.ParentName = fmt.Sprintf("%s.%s", getTypeName(selectorExpr.X), selectorExpr.Sel.Name)
+								structDef.ParentType = fmt.Sprintf("%s.%s", getTypeName(selectorExpr.X), selectorExpr.Sel.Name)
+								structDef.ParentName = selectorExpr.Sel.Name
 								parentFound = true
 							}
 						}
@@ -50,7 +57,19 @@ func parseStructs(node *ast.File) []*StructDef {
 							// 修改：去除 // 前缀后匹配注解
 							commentText := strings.TrimSpace(strings.TrimPrefix(c.Text, "//"))
 							if strings.HasPrefix(commentText, "@goqml.property") {
-								structDef.Properties = append(structDef.Properties, parseFieldPropertyDef(commentText, x.Name.Name, field))
+								if strings.Contains(commentText, ".emitter") {
+									def := parseFieldPropertyEmitterDef(commentText, x.Name.Name, field)
+									existingProperty := findPropertyByName(structDef.Properties, def.Name)
+									if existingProperty == nil {
+										structDef.Properties = append(structDef.Properties, def)
+									} else {
+										updateProperty(existingProperty, def)
+									}
+								} else {
+									structDef.Properties = append(structDef.Properties, parseFieldPropertyDef(commentText, x.Name.Name, field))
+								}
+							} else if strings.HasPrefix(commentText, "@goqml.signal") {
+								structDef.Signals = append(structDef.Signals, parseSignalDef(commentText, x.Name.Name, field))
 							}
 						}
 					}
@@ -66,8 +85,6 @@ func parseStructs(node *ast.File) []*StructDef {
 									commentText := strings.TrimSpace(strings.TrimPrefix(c.Text, "//"))
 									if strings.HasPrefix(commentText, "@goqml.slot") {
 										structDef.Slots = append(structDef.Slots, parseSlotDef(commentText, ident.Name, x))
-									} else if strings.HasPrefix(commentText, "@goqml.signal") {
-										structDef.Signals = append(structDef.Signals, parseSignalDef(commentText, ident.Name, x))
 									} else if strings.HasPrefix(commentText, "@goqml.property") {
 										def := parseMethodPropertyDef(commentText, ident.Name, x)
 										existingProperty := findPropertyByName(structDef.Properties, def.Name)
@@ -129,7 +146,7 @@ func updateProperty(existingProperty *PropertyDef, property *PropertyDef) {
 }
 
 func parseSlotDef(comment string, structName string, funcDecl *ast.FuncDecl) *SlotDef {
-	re := regexp.MustCompile(`@goqml\.slot\s*(\("?(.*?)"?\))?`)
+	re := regexp.MustCompile(`@goqml\.slot\s*(\("(.*)"\))?`)
 	match := re.FindStringSubmatch(comment)
 	name := funcDecl.Name.Name
 	if len(match) > 2 && match[2] != "" {
@@ -165,17 +182,24 @@ func parseSlotDef(comment string, structName string, funcDecl *ast.FuncDecl) *Sl
 	}
 }
 
-func parseSignalDef(comment string, structName string, funcDecl *ast.FuncDecl) *SignalDef {
-	re := regexp.MustCompile(`@goqml\.signal\s*(\("(.*?)"\))?`)
+func parseSignalDef(comment string, structName string, field *ast.Field) *SignalDef {
+	re := regexp.MustCompile(`@goqml\.signal\s*(\("(.*)"\))?`)
 	match := re.FindStringSubmatch(comment)
-	name := funcDecl.Name.Name
+
+	// 校验 field 是否为函数类型
+	funcType, ok := field.Type.(*ast.FuncType)
+	if !ok {
+		panic(fmt.Sprintf("Field %s is not a function type", field.Names[0].Name))
+	}
+
+	name := field.Names[0].Name
 	if len(match) > 2 && match[2] != "" {
 		name = match[2]
 	}
 
 	params := []*ParamDef{}
-	funcType := funcDecl.Type
 
+	// 提取函数签名中的参数
 	for _, param := range funcType.Params.List {
 		paramType := ""
 		if ident, ok := param.Type.(*ast.Ident); ok {
@@ -188,14 +212,14 @@ func parseSignalDef(comment string, structName string, funcDecl *ast.FuncDecl) *
 
 	return &SignalDef{
 		StructName: structName,
-		MethodName: funcDecl.Name.Name,
+		FieldName:  field.Names[0].Name,
 		Name:       name,
 		Params:     params,
 	}
 }
 
 func parseFieldPropertyDef(comment string, structName string, field *ast.Field) *PropertyDef {
-	re := regexp.MustCompile(`@goqml\.property\s*(\("(.*?)"\))?`)
+	re := regexp.MustCompile(`@goqml\.property\s*(\("(.*)"\))?`)
 	match := re.FindStringSubmatch(comment)
 	fieldName := field.Names[0].Name
 	name := fieldName
@@ -231,7 +255,7 @@ func parseFieldPropertyDef(comment string, structName string, field *ast.Field) 
 }
 
 func parseMethodPropertyDef(comment string, structName string, funcDecl *ast.FuncDecl) *PropertyDef {
-	re := regexp.MustCompile(`@goqml\.property\s*\("?(.*?)"?\)\.(getter|setter|emitter)(\("?(.*?)"?\))?`)
+	re := regexp.MustCompile(`@goqml\.property\s*\("(.*)"\)\.(getter|setter)(\("(.*)"\))?`)
 	match := re.FindStringSubmatch(comment)
 	if len(match) < 5 {
 		panic("Invalid property annotation")
@@ -278,21 +302,49 @@ func parseMethodPropertyDef(comment string, structName string, funcDecl *ast.Fun
 		typeNode := funcType.Params.List[0].Type
 		def.Type = getMetaTypeName(typeNode)
 		def.Setter = accessor
-	case "emitter":
-		if funcType.Params == nil || len(funcType.Params.List) != 1 {
-			panic("emitter must have one parameter")
-		}
-		if funcType.Results != nil && len(funcType.Results.List) != 0 {
-			panic("emitter must return nothing")
-		}
-		typeNode := funcType.Params.List[0].Type
-		def.Type = getMetaTypeName(typeNode)
-		def.Emitter = accessor
 	default:
 		panic("unsupported property type")
 	}
 
 	return def
+}
+
+func parseFieldPropertyEmitterDef(comment string, structName string, field *ast.Field) *PropertyDef {
+	re := regexp.MustCompile(`@goqml\.property\s*\("(.*)"\)\.emitter(\("(.*)"\))?`)
+	match := re.FindStringSubmatch(comment)
+	if len(match) < 4 {
+		panic("Invalid property emitter annotation")
+	}
+
+	propertyName := match[1]
+	emitterName := field.Names[0].Name
+	if len(match) > 3 && match[3] != "" {
+		emitterName = match[3]
+	}
+
+	funcType, ok := field.Type.(*ast.FuncType)
+	if !ok {
+		panic(fmt.Sprintf("Field %s is not a function type", field.Names[0].Name))
+	}
+
+	if funcType.Params == nil || len(funcType.Params.List) != 1 {
+		panic("emitter must have one parameter")
+	}
+	if funcType.Results != nil && len(funcType.Results.List) != 0 {
+		panic("emitter must return nothing")
+	}
+	typeNode := funcType.Params.List[0].Type
+
+	return &PropertyDef{
+		StructName: structName,
+		Name:       propertyName,
+		Type:       getMetaTypeName(typeNode),
+		Emitter: &PropertyAccessor{
+			Name:              emitterName,
+			AnnotationType:    PropertyAnnotationTypeMethod,
+			FieldOrMethodName: field.Names[0].Name,
+		},
+	}
 }
 
 func getTypeName(expr ast.Expr) string {

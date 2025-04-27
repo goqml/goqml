@@ -40,7 +40,7 @@ func (*MyStruct) MySignal(y string)
 			expected: []*StructDef{
 				{
 					Name:       "MyStruct",
-					ParentName: "goqml.QObject",
+					ParentType: "goqml.QObject",
 					Slots: []*SlotDef{
 						{
 							StructName: "MyStruct",
@@ -52,7 +52,7 @@ func (*MyStruct) MySignal(y string)
 					Signals: []*SignalDef{
 						{
 							StructName: "MyStruct",
-							MethodName: "MySignal",
+							FieldName:  "MySignal",
 							Name:       "MySignal",
 							Params:     []*ParamDef{{Name: "y", Type: "string"}},
 						},
@@ -105,7 +105,7 @@ func (*CustomStruct) MySignal(z bool)
 			expected: []*StructDef{
 				{
 					Name:       "CustomStruct",
-					ParentName: "goqml.QObject",
+					ParentType: "goqml.QObject",
 					Slots: []*SlotDef{
 						{
 							StructName: "CustomStruct",
@@ -117,7 +117,7 @@ func (*CustomStruct) MySignal(z bool)
 					Signals: []*SignalDef{
 						{
 							StructName: "CustomStruct",
-							MethodName: "MySignal",
+							FieldName:  "MySignal",
 							Name:       "customSignalName",
 							Params:     []*ParamDef{{Name: "z", Type: "bool"}},
 						},
@@ -172,7 +172,7 @@ func (s *PropertyStruct) P1Changed(value int)
 			expected: []*StructDef{
 				{
 					Name:       "PropertyStruct",
-					ParentName: "goqml.QObject",
+					ParentType: "goqml.QObject",
 					Properties: []*PropertyDef{
 						{
 							StructName: "PropertyStruct",
@@ -223,7 +223,7 @@ func (s *NamedPropertyStruct) CustomEmitter(value int)
 			expected: []*StructDef{
 				{
 					Name:       "NamedPropertyStruct",
-					ParentName: "goqml.QObject",
+					ParentType: "goqml.QObject",
 					Properties: []*PropertyDef{
 						{
 							StructName: "NamedPropertyStruct",
@@ -268,7 +268,7 @@ func (s *GetterStruct) GetP1() int {
 			expected: []*StructDef{
 				{
 					Name:       "GetterStruct",
-					ParentName: "goqml.QObject",
+					ParentType: "goqml.QObject",
 					Properties: []*PropertyDef{
 						{
 							StructName: "GetterStruct",
@@ -312,8 +312,8 @@ func getStructDefDiff(a, b []*StructDef) string {
 		if a[i].Name != b[i].Name {
 			diffs = append(diffs, fmt.Sprintf("Struct Name mismatch: got %s, want %s", a[i].Name, b[i].Name))
 		}
-		if a[i].ParentName != b[i].ParentName {
-			diffs = append(diffs, fmt.Sprintf("Parent Name mismatch in struct %s: got %s, want %s", a[i].Name, a[i].ParentName, b[i].ParentName))
+		if a[i].ParentType != b[i].ParentType {
+			diffs = append(diffs, fmt.Sprintf("Parent Name mismatch in struct %s: got %s, want %s", a[i].Name, a[i].ParentType, b[i].ParentType))
 		}
 		if slotDiff := getSlotDiff(a[i].Slots, b[i].Slots); slotDiff != "" {
 			diffs = append(diffs, fmt.Sprintf("Slots mismatch in struct %s:\n%s", a[i].Name, slotDiff))
@@ -356,8 +356,8 @@ func getSignalDiff(a, b []*SignalDef) string {
 		if a[i].StructName != b[i].StructName {
 			diffs = append(diffs, fmt.Sprintf("Signal StructName mismatch: got %s, want %s", a[i].StructName, b[i].StructName))
 		}
-		if a[i].MethodName != b[i].MethodName {
-			diffs = append(diffs, fmt.Sprintf("Signal MethodName mismatch: got %s, want %s", a[i].MethodName, b[i].MethodName))
+		if a[i].FieldName != b[i].FieldName {
+			diffs = append(diffs, fmt.Sprintf("Signal MethodName mismatch: got %s, want %s", a[i].FieldName, b[i].FieldName))
 		}
 		if paramDiff := getParamDiff(a[i].Params, b[i].Params); paramDiff != "" {
 			diffs = append(diffs, fmt.Sprintf("Signal Params mismatch:\n%s", paramDiff))
