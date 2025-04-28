@@ -3,7 +3,7 @@ package main
 import "github.com/shapled/goqml"
 
 type Contact struct {
-	goqml.QObject[*Contact]
+	goqml.QObject
 
 	// @goqml.property("firstName")
 	FirstName string

@@ -5,7 +5,7 @@ import (
 )
 
 type Contact struct {
-	goqml.QObject[*Contact]
+	goqml.QObject
 
 	Name string
 
