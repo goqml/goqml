@@ -8,6 +8,7 @@ import (
 
 	"github.com/ebitengine/purego"
 	cmap "github.com/orcaman/concurrent-map/v2"
+	"github.com/shapled/goqml/util"
 )
 
 type ConnectionType int
@@ -25,8 +26,8 @@ type ParameterDefinition struct {
 	MetaType QMetaType
 }
 
-func (d *ParameterDefinition) toDos() DosParameterDefinition {
-	return DosParameterDefinition{name: stringToCharPtr(d.Name), metaType: int32(d.MetaType)}
+func (d *ParameterDefinition) toDos(pg *util.PinGroup) DosParameterDefinition {
+	return DosParameterDefinition{name: stringToCharPtr(pg, d.Name), metaType: int32(d.MetaType)}
 }
 
 type SlotDefinition struct {
@@ -35,16 +36,16 @@ type SlotDefinition struct {
 	Params      []*ParameterDefinition
 }
 
-func (d *SlotDefinition) toDos() DosSlotDefinition {
+func (d *SlotDefinition) toDos(pg *util.PinGroup) DosSlotDefinition {
 	parameters := make([]DosParameterDefinition, len(d.Params))
 	for i, param := range d.Params {
-		parameters[i] = param.toDos()
+		parameters[i] = param.toDos(pg)
 	}
 	return DosSlotDefinition{
-		name:            stringToCharPtr(d.Name),
+		name:            stringToCharPtr(pg, d.Name),
 		returnMetaType:  int32(d.RetMetaType),
 		parametersCount: int32(len(parameters)),
-		parameters:      sliceToPtr(parameters),
+		parameters:      sliceToPtr(pg, parameters),
 	}
 }
 
@@ -53,15 +54,15 @@ type SignalDefinition struct {
 	Params []*ParameterDefinition
 }
 
-func (d *SignalDefinition) toDos() DosSignalDefinition {
+func (d *SignalDefinition) toDos(pg *util.PinGroup) DosSignalDefinition {
 	parameters := make([]DosParameterDefinition, len(d.Params))
 	for i, param := range d.Params {
-		parameters[i] = param.toDos()
+		parameters[i] = param.toDos(pg)
 	}
 	return DosSignalDefinition{
-		name:            stringToCharPtr(d.Name),
+		name:            stringToCharPtr(pg, d.Name),
 		parametersCount: int32(len(parameters)),
-		parameters:      sliceToPtr(parameters),
+		parameters:      sliceToPtr(pg, parameters),
 	}
 }
 
@@ -73,13 +74,13 @@ type PropertyDefinition struct {
 	Emitter  string
 }
 
-func (d *PropertyDefinition) toDos() DosPropertyDefinition {
+func (d *PropertyDefinition) toDos(pg *util.PinGroup) DosPropertyDefinition {
 	return DosPropertyDefinition{
-		name:             stringToCharPtr(d.Name),
+		name:             stringToCharPtr(pg, d.Name),
 		propertyMetaType: int32(d.MetaType),
-		readSlot:         stringToCharPtr(d.Getter),
-		writeSlot:        stringToCharPtr(d.Setter),
-		notifySignal:     stringToCharPtr(d.Emitter),
+		readSlot:         stringToCharPtr(pg, d.Getter),
+		writeSlot:        stringToCharPtr(pg, d.Setter),
+		notifySignal:     stringToCharPtr(pg, d.Emitter),
 	}
 }
 

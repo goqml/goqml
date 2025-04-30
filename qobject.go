@@ -13,15 +13,15 @@ type (
 )
 
 const (
-	OwnershipTake Ownership = iota
-	OwnershipClone
+	OwnershipTake  Ownership = 0
+	OwnershipClone Ownership = 1
 )
 
 var (
 	RootMetaObject = NewQObjectMetaObject()
 )
 
-type IQObjectReal interface {
+type IQObject interface {
 	getVPtr() DosQObject
 	setVPtr(vptr DosQObject)
 	setOwned(owned bool)
@@ -29,7 +29,7 @@ type IQObjectReal interface {
 	OnSlotCalled(slotName string, arguments []*QVariant)
 }
 
-func ptrOfIQObjectReal(obj IQObjectReal) unsafe.Pointer {
+func ptrOfIQObjectReal(obj IQObject) unsafe.Pointer {
 	val := reflect.ValueOf(obj)
 	if val.Kind() != reflect.Ptr {
 		panic("obj must be a pointer type")
@@ -38,7 +38,7 @@ func ptrOfIQObjectReal(obj IQObjectReal) unsafe.Pointer {
 }
 
 type IQObjectPtr[T any] interface {
-	IQObjectReal
+	IQObject
 	*T
 }
 
@@ -51,9 +51,9 @@ func (obj *QObject) StaticMetaObject() *QMetaObject {
 	return RootMetaObject
 }
 
-func (obj *QObject) Setup(inst IQObjectReal, meta *QMetaObject) {
+func (obj *QObject) Setup(inst IQObject, meta *QMetaObject) {
 	obj.owner = true
-	obj.vptr = dos.QObjectCreate(unsafe.Pointer(&inst), meta.vptr, DosQObjectCallBack(qobjectCallback))
+	obj.vptr = dos.QObjectCreate(unsafe.Pointer(&inst), meta.vptr, DosQObjectCallBack(qObjectCallback))
 }
 
 func (obj *QObject) Delete() {
@@ -81,7 +81,7 @@ func (obj *QObject) Emit(signalName string, arguments ...*QVariant) {
 	for _, argument := range arguments {
 		dosArguments = append(dosArguments, argument.vptr)
 	}
-	dos.QObjectSignalEmit(obj.vptr, signalName, len(dosArguments), DosQVariantArray(sliceToPtr(dosArguments)))
+	dos.QObjectSignalEmit(obj.vptr, signalName, len(dosArguments), DosQVariantArray(sliceToPtr(nil, dosArguments)))
 }
 
 func (obj *QObject) DeleteLater() {
@@ -96,8 +96,8 @@ func (obj *QObject) OnSlotCalled(slotName string, arguments []*QVariant) {
 	fmt.Println("ignore QObject slot:", slotName)
 }
 
-var qobjectCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) uintptr {
-	obj := *(*IQObjectReal)(ptr)
+var qObjectCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) uintptr {
+	obj := *(*IQObject)(ptr)
 
 	slotName := NewQVariantFrom(slotNamePtr, OwnershipClone)
 	defer slotName.Delete()

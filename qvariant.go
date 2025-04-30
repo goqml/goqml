@@ -35,7 +35,7 @@ func NewQVariantFrom(value DosQVariant, takeOwnership Ownership) *QVariant {
 	}
 }
 
-func NewQVariantQObject(obj IQObjectReal) *QVariant {
+func NewQVariantQObject(obj IQObject) *QVariant {
 	return &QVariant{vptr: dos.QVariantCreateQObject(obj.getVPtr())}
 }
 
@@ -51,6 +51,8 @@ func NewQVariant(value any) *QVariant {
 		return NewQVariantFloat(value)
 	case float64:
 		return NewQVariantDouble(value)
+	case *QObject:
+		return NewQVariantQObject(value)
 	default:
 		panic("invalid type")
 	}

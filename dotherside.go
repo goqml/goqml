@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	cmap "github.com/orcaman/concurrent-map/v2"
+	"github.com/shapled/goqml/util"
 	"github.com/shapled/puregostruct"
 )
 
@@ -15,9 +15,14 @@ type (
 	DosQObject               unsafe.Pointer
 	DosQObjectStore          *uintptr
 	DosQUrl                  unsafe.Pointer
+	DosQHashIntByteArray     unsafe.Pointer
 	DosQVariant              unsafe.Pointer
 	DosQVariantArray         unsafe.Pointer // []DosQVariant
 	DosQMetaObjectConnection unsafe.Pointer
+	DosQModelIndex           unsafe.Pointer
+	DosQAbstractItemModel    unsafe.Pointer
+	DosQAbstractTableModel   unsafe.Pointer
+	DosQAbstractListModel    unsafe.Pointer
 
 	DosQmlRegisterType struct {
 		major            int32
@@ -70,6 +75,34 @@ type (
 	DosPropertyDefinitions struct {
 		count       int32
 		definitions unsafe.Pointer
+	}
+
+	DosRowCountCallback     uintptr // proc(nimmodel: NimQAbstractItemModel, rawIndex: DosQModelIndex, result: var cint) {.cdecl.}
+	DosColumnCountCallback  uintptr // proc(nimmodel: NimQAbstractItemModel, rawIndex: DosQModelIndex, result: var cint) {.cdecl.}
+	DosDataCallback         uintptr // proc(nimmodel: NimQAbstractItemModel, rawIndex: DosQModelIndex, role: cint, result: DosQVariant) {.cdecl.}
+	DosSetDataCallback      uintptr // proc(nimmodel: NimQAbstractItemModel, rawIndex: DosQModelIndex, value: DosQVariant, role: cint, result: var bool) {.cdecl.}
+	DosRoleNamesCallback    uintptr // proc(nimmodel: NimQAbstractItemModel, result: DosQHashIntByteArray) {.cdecl.}
+	DosFlagsCallback        uintptr // proc(nimmodel: NimQAbstractItemModel, index: DosQModelIndex, result: var cint) {.cdecl.}
+	DosHeaderDataCallback   uintptr // proc(nimmodel: NimQAbstractItemModel, section: cint, orientation: cint, role: cint, result: DosQVariant) {.cdecl.}
+	DosIndexCallback        uintptr // proc(nimmodel: NimQAbstractItemModel, row: cint, column: cint, parent: DosQModelIndex, result: DosQModelIndex) {.cdecl.}
+	DosParentCallback       uintptr // proc(nimmodel: NimQAbstractItemModel, child: DosQModelIndex, result: DosQModelIndex) {.cdecl.}
+	DosHasChildrenCallback  uintptr // proc(nimmodel: NimQAbstractItemModel, parent: DosQModelIndex, result: var bool) {.cdecl.}
+	DosCanFetchMoreCallback uintptr // proc(nimmodel: NimQAbstractItemModel, parent: DosQModelIndex, result: var bool) {.cdecl.}
+	DosFetchMoreCallback    uintptr // proc(nimmodel: NimQAbstractItemModel, parent: DosQModelIndex) {.cdecl.}
+
+	DosQAbstractItemModelCallbacks struct {
+		RowCount     DosRowCountCallback
+		ColumnCount  DosColumnCountCallback
+		Data         DosDataCallback
+		SetData      DosSetDataCallback
+		RoleNames    DosRoleNamesCallback
+		Flags        DosFlagsCallback
+		HeaderData   DosHeaderDataCallback
+		Index        DosIndexCallback
+		Parent       DosParentCallback
+		HasChildren  DosHasChildrenCallback
+		CanFetchMore DosCanFetchMoreCallback
+		FetchMore    DosFetchMoreCallback
 	}
 
 	DosQObjectConnectLambdaCallback uintptr // func(_ purego.CDecl, uintptr, int, DosQVariantArray) uintptr
@@ -170,43 +203,43 @@ type Dos struct {
 	QQuickViewSetSource func(unsafe.Pointer, string) `purego:"dos_qquickview_set_source"`
 
 	// QHash<int, QByteArra>
-	QHashIntByteArrayCreate func() unsafe.Pointer             `purego:"dos_qhash_int_qbytearray_create"`
-	QHashIntByteArrayDelete func(unsafe.Pointer)              `purego:"dos_qhash_int_qbytearray_delete"`
-	QHashIntByteArrayInsert func(unsafe.Pointer, int, string) `purego:"dos_qhash_int_qbytearray_insert"`
-	QHashIntByteArrayValue  func(unsafe.Pointer, int) string  `purego:"dos_qhash_int_qbytearray_value"`
+	QHashIntByteArrayCreate func() DosQHashIntByteArray             `purego:"dos_qhash_int_qbytearray_create"`
+	QHashIntByteArrayDelete func(DosQHashIntByteArray)              `purego:"dos_qhash_int_qbytearray_delete"`
+	QHashIntByteArrayInsert func(DosQHashIntByteArray, int, string) `purego:"dos_qhash_int_qbytearray_insert"`
+	QHashIntByteArrayValue  func(DosQHashIntByteArray, int) string  `purego:"dos_qhash_int_qbytearray_value"`
 
 	// QModelIndex
-	QModelIndexCreate            func() unsafe.Pointer                             `purego:"dos_qmodelindex_create"`
-	QModelIndexCreateQModelIndex func(unsafe.Pointer) unsafe.Pointer               `purego:"dos_qmodelindex_create_qmodelindex"`
-	QModelIndexDelete            func(unsafe.Pointer)                              `purego:"dos_qmodelindex_delete"`
-	QModelIndexRow               func(unsafe.Pointer) int32                        `purego:"dos_qmodelindex_row"`
-	QModelIndexColumn            func(unsafe.Pointer) int32                        `purego:"dos_qmodelindex_column"`
-	QModelIndexIsValid           func(unsafe.Pointer) bool                         `purego:"dos_qmodelindex_isValid"`
-	QModelIndexData              func(unsafe.Pointer, int32) unsafe.Pointer        `purego:"dos_qmodelindex_data"`
-	QModelIndexParent            func(unsafe.Pointer) unsafe.Pointer               `purego:"dos_qmodelindex_parent"`
-	QModelIndexChild             func(unsafe.Pointer, int32, int32) unsafe.Pointer `purego:"dos_qmodelindex_child"`
-	QModelIndexSibling           func(unsafe.Pointer, int32, int32) unsafe.Pointer `purego:"dos_qmodelindex_sibling"`
-	QModelIndexAssign            func(unsafe.Pointer, unsafe.Pointer)              `purego:"dos_qmodelindex_assign"`
-	QModelIndexInternalPointer   func(unsafe.Pointer) unsafe.Pointer               `purego:"dos_qmodelindex_internalPointer"`
+	QModelIndexCreate            func() DosQModelIndex                         `purego:"dos_qmodelindex_create"`
+	QModelIndexCreateQModelIndex func(DosQModelIndex) DosQModelIndex           `purego:"dos_qmodelindex_create_qmodelindex"`
+	QModelIndexDelete            func(DosQModelIndex)                          `purego:"dos_qmodelindex_delete"`
+	QModelIndexRow               func(DosQModelIndex) int                      `purego:"dos_qmodelindex_row"`
+	QModelIndexColumn            func(DosQModelIndex) int                      `purego:"dos_qmodelindex_column"`
+	QModelIndexIsValid           func(DosQModelIndex) bool                     `purego:"dos_qmodelindex_isValid"`
+	QModelIndexData              func(DosQModelIndex, int) DosQVariant         `purego:"dos_qmodelindex_data"`
+	QModelIndexParent            func(DosQModelIndex) DosQModelIndex           `purego:"dos_qmodelindex_parent"`
+	QModelIndexChild             func(DosQModelIndex, int, int) DosQModelIndex `purego:"dos_qmodelindex_child"`
+	QModelIndexSibling           func(DosQModelIndex, int, int) DosQModelIndex `purego:"dos_qmodelindex_sibling"`
+	QModelIndexAssign            func(DosQModelIndex, DosQModelIndex)          `purego:"dos_qmodelindex_assign"`
+	QModelIndexInternalPointer   func(DosQModelIndex) unsafe.Pointer           `purego:"dos_qmodelindex_internalPointer"`
 
 	// QAbstractItemModel
-	QAbstractItemModelCreate             func(unsafe.Pointer, DosQMetaObject, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstractitemmodel_create"`
-	QAbstractItemModelBeginInsertRows    func(unsafe.Pointer, unsafe.Pointer, int32, int32)                                  `purego:"dos_qabstractitemmodel_beginInsertRows"`
-	QAbstractItemModelEndInsertRows      func(unsafe.Pointer)                                                                `purego:"dos_qabstractitemmodel_endInsertRows"`
-	QAbstractItemModelBeginRemoveRows    func(unsafe.Pointer, unsafe.Pointer, int32, int32)                                  `purego:"dos_qabstractitemmodel_beginRemoveRows"`
-	QAbstractItemModelEndRemoveRows      func(unsafe.Pointer)                                                                `purego:"dos_qabstractitemmodel_endRemoveRows"`
-	QAbstractItemModelBeginInsertColumns func(unsafe.Pointer, unsafe.Pointer, int32, int32)                                  `purego:"dos_qabstractitemmodel_beginInsertColumns"`
-	QAbstractItemModelEndInsertColumns   func(unsafe.Pointer)                                                                `purego:"dos_qabstractitemmodel_endInsertColumns"`
-	QAbstractItemModelBeginRemoveColumns func(unsafe.Pointer, unsafe.Pointer, int32, int32)                                  `purego:"dos_qabstractitemmodel_beginRemoveColumns"`
-	QAbstractItemModelEndRemoveColumns   func(unsafe.Pointer)                                                                `purego:"dos_qabstractitemmodel_endRemoveColumns"`
-	QAbstractItemModelBeginResetModel    func(unsafe.Pointer)                                                                `purego:"dos_qabstractitemmodel_beginResetModel"`
-	QAbstractItemModelEndResetModel      func(unsafe.Pointer)                                                                `purego:"dos_qabstractitemmodel_endResetModel"`
-	QAbstractItemModelDataChanged        func(unsafe.Pointer, unsafe.Pointer, unsafe.Pointer, unsafe.Pointer, int32)         `purego:"dos_qabstractitemmodel_dataChanged"`
-	QAbstractItemModelCreateIndex        func(unsafe.Pointer, int32, int32, unsafe.Pointer) unsafe.Pointer                   `purego:"dos_qabstractitemmodel_createIndex"`
-	QAbstractItemModelHasChildren        func(unsafe.Pointer, unsafe.Pointer) bool                                           `purego:"dos_qabstractitemmodel_hasChildren"`
-	QAbstractItemModelHasIndex           func(unsafe.Pointer, int, int, unsafe.Pointer) bool                                 `purego:"dos_qabstractitemmodel_hasIndex"`
-	QAbstractItemModelCanFetchMore       func(unsafe.Pointer, unsafe.Pointer) bool                                           `purego:"dos_qabstractitemmodel_canFetchMore"`
-	QAbstractItemModelFetchMore          func(unsafe.Pointer, unsafe.Pointer)                                                `purego:"dos_qabstractitemmodel_fetchMore"`
+	QAbstractItemModelCreate             func(unsafe.Pointer, DosQMetaObject, uintptr, DosQAbstractItemModelCallbacks) DosQAbstractItemModel `purego:"dos_qabstractitemmodel_create"`
+	QAbstractItemModelBeginInsertRows    func(DosQAbstractItemModel, DosQModelIndex, int, int)                                               `purego:"dos_qabstractitemmodel_beginInsertRows"`
+	QAbstractItemModelEndInsertRows      func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endInsertRows"`
+	QAbstractItemModelBeginRemoveRows    func(DosQAbstractItemModel, DosQModelIndex, int, int)                                               `purego:"dos_qabstractitemmodel_beginRemoveRows"`
+	QAbstractItemModelEndRemoveRows      func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endRemoveRows"`
+	QAbstractItemModelBeginInsertColumns func(DosQAbstractItemModel, DosQModelIndex, int, int)                                               `purego:"dos_qabstractitemmodel_beginInsertColumns"`
+	QAbstractItemModelEndInsertColumns   func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endInsertColumns"`
+	QAbstractItemModelBeginRemoveColumns func(DosQAbstractItemModel, DosQModelIndex, int, int)                                               `purego:"dos_qabstractitemmodel_beginRemoveColumns"`
+	QAbstractItemModelEndRemoveColumns   func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endRemoveColumns"`
+	QAbstractItemModelBeginResetModel    func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_beginResetModel"`
+	QAbstractItemModelEndResetModel      func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endResetModel"`
+	QAbstractItemModelDataChanged        func(DosQAbstractItemModel, DosQModelIndex, DosQModelIndex, unsafe.Pointer, int)                    `purego:"dos_qabstractitemmodel_dataChanged"`
+	QAbstractItemModelCreateIndex        func(DosQAbstractItemModel, int, int, unsafe.Pointer) DosQModelIndex                                `purego:"dos_qabstractitemmodel_createIndex"`
+	QAbstractItemModelHasChildren        func(DosQAbstractItemModel, DosQModelIndex) bool                                                    `purego:"dos_qabstractitemmodel_hasChildren"`
+	QAbstractItemModelHasIndex           func(DosQAbstractItemModel, int, int, DosQModelIndex) bool                                          `purego:"dos_qabstractitemmodel_hasIndex"`
+	QAbstractItemModelCanFetchMore       func(DosQAbstractItemModel, DosQModelIndex) bool                                                    `purego:"dos_qabstractitemmodel_canFetchMore"`
+	QAbstractItemModelFetchMore          func(DosQAbstractItemModel, DosQModelIndex)                                                         `purego:"dos_qabstractitemmodel_fetchMore"`
 
 	// QResource
 	QResourceRegister func(string) `purego:"dos_qresource_register"`
@@ -216,17 +249,17 @@ type Dos struct {
 	QDeclarativeQmlRegisterSingletonType func(*DosQmlRegisterType) int32 `purego:"dos_qdeclarative_qmlregistersingletontype"`
 
 	// QAbstractListModel
-	QAbstractListModelQMetaObject func() DosQMetaObject                                                               `purego:"dos_qabstractlistmodel_qmetaobject"`
-	QAbstractListModelCreate      func(unsafe.Pointer, DosQMetaObject, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstractlistmodel_create"`
-	QAbstractListModelColumnCount func(unsafe.Pointer, unsafe.Pointer) int32                                          `purego:"dos_qabstractlistmodel_columnCount"`
-	QAbstractListModelParent      func(unsafe.Pointer, unsafe.Pointer) unsafe.Pointer                                 `purego:"dos_qabstractlistmodel_parent"`
-	QAbstractListModelIndex       func(unsafe.Pointer, int32, int32, unsafe.Pointer) unsafe.Pointer                   `purego:"dos_qabstractlistmodel_index"`
+	QAbstractListModelQMetaObject func() DosQMetaObject                                                                               `purego:"dos_qabstractlistmodel_qmetaobject"`
+	QAbstractListModelCreate      func(unsafe.Pointer, DosQMetaObject, uintptr, DosQAbstractItemModelCallbacks) DosQAbstractListModel `purego:"dos_qabstractlistmodel_create"`
+	QAbstractListModelColumnCount func(DosQAbstractListModel, DosQModelIndex) int                                                     `purego:"dos_qabstractlistmodel_columnCount"`
+	QAbstractListModelParent      func(DosQAbstractListModel, DosQModelIndex) DosQModelIndex                                          `purego:"dos_qabstractlistmodel_parent"`
+	QAbstractListModelIndex       func(DosQAbstractListModel, int, int, DosQModelIndex) DosQModelIndex                                `purego:"dos_qabstractlistmodel_index"`
 
 	// QAbstractTableModel
-	QAbstractTableModelQMetaObject func() DosQMetaObject                                                               `purego:"dos_qabstracttablemodel_qmetaobject"`
-	QAbstractTableModelCreate      func(unsafe.Pointer, DosQMetaObject, unsafe.Pointer, unsafe.Pointer) unsafe.Pointer `purego:"dos_qabstracttablemodel_create"`
-	QAbstractTableModelParent      func(unsafe.Pointer, unsafe.Pointer) unsafe.Pointer                                 `purego:"dos_qabstracttablemodel_parent"`
-	QAbstractTableModelIndex       func(unsafe.Pointer, int32, int32, unsafe.Pointer) unsafe.Pointer                   `purego:"dos_qabstracttablemodel_index"`
+	QAbstractTableModelQMetaObject func() DosQMetaObject                                                                                `purego:"dos_qabstracttablemodel_qmetaobject"`
+	QAbstractTableModelCreate      func(unsafe.Pointer, DosQMetaObject, uintptr, DosQAbstractItemModelCallbacks) DosQAbstractTableModel `purego:"dos_qabstracttablemodel_create"`
+	QAbstractTableModelParent      func(DosQAbstractTableModel, DosQModelIndex) DosQModelIndex                                          `purego:"dos_qabstracttablemodel_parent"`
+	QAbstractTableModelIndex       func(DosQAbstractTableModel, int, int, DosQModelIndex) DosQModelIndex                                `purego:"dos_qabstracttablemodel_index"`
 }
 
 func charPtrToString(ptr unsafe.Pointer) string {
@@ -248,24 +281,18 @@ func charPtrToString(ptr unsafe.Pointer) string {
 	return string(bs)
 }
 
-var cache cmap.ConcurrentMap[uintptr, []byte] = cmap.NewWithCustomShardingFunction[uintptr, []byte](func(key uintptr) uint32 {
-	return uint32(key)
-})
-
-func stringToCharPtr(s string) unsafe.Pointer {
+func stringToCharPtr(pg *util.PinGroup, s string) unsafe.Pointer {
 	bs := []byte(s + "\x00")
-	ptr := unsafe.Pointer(&bs[0])
-	cache.Set(uintptr(ptr), bs)
+	pg.Pin(bs)
 	return unsafe.Pointer(&bs[0])
 }
 
-func releaseBytes() {
-	cache.Clear()
-}
-
-func sliceToPtr[T any](arr []T) unsafe.Pointer {
+func sliceToPtr[T any](pg *util.PinGroup, arr []T) unsafe.Pointer {
 	if len(arr) == 0 {
 		return nil
+	}
+	if pg != nil {
+		pg.Pin(arr)
 	}
 	return unsafe.Pointer(&arr[0])
 }

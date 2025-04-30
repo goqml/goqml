@@ -1,5 +1,7 @@
 package goqml
 
+import "github.com/shapled/goqml/util"
+
 type QMetaObject struct {
 	vptr       DosQMetaObject
 	signals    []*SignalDefinition
@@ -9,6 +11,18 @@ type QMetaObject struct {
 
 func NewQObjectMetaObject() *QMetaObject {
 	return &QMetaObject{vptr: dos.QObjectQMetaObject()}
+}
+
+func NewQAbstractItemModelMetaObject() *QMetaObject {
+	return &QMetaObject{vptr: dos.QAbstractItemModelQMetaObject()}
+}
+
+func NewQAbstractListModelMetaObject() *QMetaObject {
+	return &QMetaObject{vptr: dos.QAbstractListModelQMetaObject()}
+}
+
+func NewQAbstractTableModelMetaObject() *QMetaObject {
+	return &QMetaObject{vptr: dos.QAbstractTableModelQMetaObject()}
 }
 
 func NewQMetaObject(
@@ -53,28 +67,28 @@ func (meta *QMetaObject) Setup(
 	slots []*SlotDefinition,
 	properties []*PropertyDefinition,
 ) {
+	pg := util.NewPinGroup()
+
 	dosSignals := make([]DosSignalDefinition, 0)
 	for _, signal := range signals {
-		dosSignals = append(dosSignals, signal.toDos())
+		dosSignals = append(dosSignals, signal.toDos(pg))
 	}
 
 	dosSlots := make([]DosSlotDefinition, 0)
 	for _, slot := range slots {
-		dosSlots = append(dosSlots, slot.toDos())
+		dosSlots = append(dosSlots, slot.toDos(pg))
 	}
 
 	dosProperties := make([]DosPropertyDefinition, 0)
 	for _, property := range properties {
-		dosProperties = append(dosProperties, property.toDos())
+		dosProperties = append(dosProperties, property.toDos(pg))
 	}
 
 	meta.vptr = dos.QMetaObjectCreate(
 		super.vptr,
 		className,
-		&DosSignalDefinitions{count: int32(len(dosSignals)), definitions: sliceToPtr(dosSignals)},
-		&DosSlotDefinitions{count: int32(len(dosSlots)), definitions: sliceToPtr(dosSlots)},
-		&DosPropertyDefinitions{count: int32(len(dosProperties)), definitions: sliceToPtr(dosProperties)},
+		&DosSignalDefinitions{count: int32(len(dosSignals)), definitions: sliceToPtr(pg, dosSignals)},
+		&DosSlotDefinitions{count: int32(len(dosSlots)), definitions: sliceToPtr(pg, dosSlots)},
+		&DosPropertyDefinitions{count: int32(len(dosProperties)), definitions: sliceToPtr(pg, dosProperties)},
 	)
-
-	releaseBytes()
 }
