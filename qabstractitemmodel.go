@@ -43,7 +43,7 @@ var (
 		index := NewQModelIndexFromOther(rawIndex, OwnershipClone)
 		qvar := model.Data(index, role)
 		if qvar != nil {
-			dos.QVariantAssign(result, qvar.vptr)
+			DosQVariantAssign(result, qvar.vptr)
 			qvar.Delete()
 		}
 	})
@@ -59,7 +59,7 @@ var (
 		model := *(*IQAbstractItemModel)(ptr)
 		roleNames := model.RoleNames()
 		for k, v := range roleNames {
-			dos.QHashIntByteArrayInsert(result, k, v)
+			DosQHashIntByteArrayInsert(result, k, v)
 		}
 	})
 
@@ -73,7 +73,7 @@ var (
 		model := *(*IQAbstractItemModel)(ptr)
 		qvar := model.HeaderData(section, orientation, role)
 		if qvar != nil {
-			dos.QVariantAssign(result, qvar.vptr)
+			DosQVariantAssign(result, qvar.vptr)
 			qvar.Delete()
 		}
 	})
@@ -82,14 +82,14 @@ var (
 		model := *(*IQAbstractItemModel)(ptr)
 		parent := NewQModelIndexFromOther(rawParent, OwnershipClone)
 		index := model.Index(row, column, parent)
-		dos.QModelIndexAssign(result, index.vptr)
+		DosQModelIndexAssign(result, index.vptr)
 	})
 
 	qModelParentCallback = purego.NewCallback(func(ptr unsafe.Pointer, childIndex DosQModelIndex, result DosQModelIndex) {
 		model := *(*IQAbstractItemModel)(ptr)
 		child := NewQModelIndexFromOther(childIndex, OwnershipClone)
 		index := model.Parent(child)
-		dos.QModelIndexAssign(result, index.vptr)
+		DosQModelIndexAssign(result, index.vptr)
 	})
 
 	qModelHasChildrenCallback = purego.NewCallback(func(ptr unsafe.Pointer, parentIndex DosQModelIndex, result *bool) {
@@ -185,15 +185,15 @@ func (model *QAbstractItemModel) Parent(index *QModelIndex) *QModelIndex {
 }
 
 func (model *QAbstractItemModel) HasChildren(parent *QModelIndex) bool {
-	return dos.QAbstractItemModelHasChildren(DosQAbstractItemModel(model.vptr), parent.vptr)
+	return DosQAbstractItemModelHasChildren(DosQAbstractItemModel(model.vptr), parent.vptr)
 }
 
 func (model *QAbstractItemModel) CanFetchMore(parent *QModelIndex) bool {
-	return dos.QAbstractItemModelCanFetchMore(DosQAbstractItemModel(model.vptr), parent.vptr)
+	return DosQAbstractItemModelCanFetchMore(DosQAbstractItemModel(model.vptr), parent.vptr)
 }
 
 func (model *QAbstractItemModel) FetchMore(parent *QModelIndex) {
-	dos.QAbstractItemModelFetchMore(DosQAbstractItemModel(model.vptr), parent.vptr)
+	DosQAbstractItemModelFetchMore(DosQAbstractItemModel(model.vptr), parent.vptr)
 }
 
 func (model *QAbstractItemModel) OnSlotCalled(slotName string, arguments []*QVariant) {
@@ -215,53 +215,53 @@ func (model *QAbstractItemModel) Setup() {
 		CanFetchMore: DosCanFetchMoreCallback(qModelCanFetchMoreCallback),
 		FetchMore:    DosFetchMoreCallback(qModelFetchMoreCallback),
 	}
-	model.vptr = DosQObject(dos.QAbstractItemModelCreate(unsafe.Pointer(model), model.StaticMetaObject().vptr, qObjectCallback, qAIMCallbacks))
+	model.vptr = DosQObject(DosQAbstractItemModelCreate(unsafe.Pointer(model), model.StaticMetaObject().vptr, qObjectCallback, qAIMCallbacks))
 }
 
 func (model *QAbstractItemModel) HasIndex(row int, column int, parent *QModelIndex) bool {
-	return dos.QAbstractItemModelHasIndex(DosQAbstractItemModel(model.vptr), row, column, parent.vptr)
+	return DosQAbstractItemModelHasIndex(DosQAbstractItemModel(model.vptr), row, column, parent.vptr)
 }
 
 func (model *QAbstractItemModel) BeginInsertRows(parentIndex *QModelIndex, first int, last int) {
-	dos.QAbstractItemModelBeginInsertRows(DosQAbstractItemModel(model.vptr), parentIndex.vptr, first, last)
+	DosQAbstractItemModelBeginInsertRows(DosQAbstractItemModel(model.vptr), parentIndex.vptr, first, last)
 }
 
 func (model *QAbstractItemModel) EndInsertRows() {
-	dos.QAbstractItemModelEndInsertRows(DosQAbstractItemModel(model.vptr))
+	DosQAbstractItemModelEndInsertRows(DosQAbstractItemModel(model.vptr))
 }
 
 func (model *QAbstractItemModel) BeginRemoveRows(parentIndex *QModelIndex, first int, last int) {
-	dos.QAbstractItemModelBeginRemoveRows(DosQAbstractItemModel(model.vptr), parentIndex.vptr, first, last)
+	DosQAbstractItemModelBeginRemoveRows(DosQAbstractItemModel(model.vptr), parentIndex.vptr, first, last)
 }
 
 func (model *QAbstractItemModel) EndRemoveRows() {
-	dos.QAbstractItemModelEndRemoveRows(DosQAbstractItemModel(model.vptr))
+	DosQAbstractItemModelEndRemoveRows(DosQAbstractItemModel(model.vptr))
 }
 
 func (model *QAbstractItemModel) BeginInsertColumns(parentIndex *QModelIndex, first int, last int) {
-	dos.QAbstractItemModelBeginInsertColumns(DosQAbstractItemModel(model.vptr), parentIndex.vptr, first, last)
+	DosQAbstractItemModelBeginInsertColumns(DosQAbstractItemModel(model.vptr), parentIndex.vptr, first, last)
 }
 
 func (model *QAbstractItemModel) EndInsertColumns() {
-	dos.QAbstractItemModelEndInsertColumns(DosQAbstractItemModel(model.vptr))
+	DosQAbstractItemModelEndInsertColumns(DosQAbstractItemModel(model.vptr))
 }
 
 func (model *QAbstractItemModel) BeginRemoveColumns(parentIndex *QModelIndex, first int, last int) {
-	dos.QAbstractItemModelBeginRemoveColumns(DosQAbstractItemModel(model.vptr), parentIndex.vptr, first, last)
+	DosQAbstractItemModelBeginRemoveColumns(DosQAbstractItemModel(model.vptr), parentIndex.vptr, first, last)
 }
 
 func (model *QAbstractItemModel) EndRemoveColumns() {
-	dos.QAbstractItemModelEndRemoveColumns(DosQAbstractItemModel(model.vptr))
+	DosQAbstractItemModelEndRemoveColumns(DosQAbstractItemModel(model.vptr))
 }
 
 func (model *QAbstractItemModel) BeginResetModel() {
-	dos.QAbstractItemModelBeginResetModel(DosQAbstractItemModel(model.vptr))
+	DosQAbstractItemModelBeginResetModel(DosQAbstractItemModel(model.vptr))
 }
 
 func (model *QAbstractItemModel) EndResetModel() {
-	dos.QAbstractItemModelEndResetModel(DosQAbstractItemModel(model.vptr))
+	DosQAbstractItemModelEndResetModel(DosQAbstractItemModel(model.vptr))
 }
 
 func (model *QAbstractItemModel) DataChanged(topLeft *QModelIndex, bottomRight *QModelIndex, roles []int) {
-	dos.QAbstractItemModelDataChanged(DosQAbstractItemModel(model.vptr), topLeft.vptr, bottomRight.vptr, sliceToPtr(nil, roles), len(roles))
+	DosQAbstractItemModelDataChanged(DosQAbstractItemModel(model.vptr), topLeft.vptr, bottomRight.vptr, sliceToPtr(nil, roles), len(roles))
 }

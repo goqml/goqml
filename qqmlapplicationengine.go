@@ -18,7 +18,7 @@ func NewQQmlApplicationEngine() *QQmlApplicationEngine {
 }
 
 func (engine *QQmlApplicationEngine) Setup() {
-	engine.vptr = dos.QQmlApplicationEngineCreate()
+	engine.vptr = DosQQmlApplicationEngineCreate()
 }
 
 func (engine *QQmlApplicationEngine) Load(filename string) {
@@ -27,26 +27,26 @@ func (engine *QQmlApplicationEngine) Load(filename string) {
 		fmt.Println(err)
 		return
 	}
-	dos.QQmlApplicationEngineLoad(engine.vptr, filepath.Join(dirname, filename))
+	DosQQmlApplicationEngineLoad(engine.vptr, filepath.Join(dirname, filename))
 }
 
 func (engine *QQmlApplicationEngine) LoadUrl(url *QUrl) {
-	dos.QQmlApplicationEngineLoadUrl(engine.vptr, url.vptr)
+	DosQQmlApplicationEngineLoadUrl(engine.vptr, url.vptr)
 }
 
 func (engine *QQmlApplicationEngine) LoadData(data string) {
-	dos.QQmlApplicationEngineLoadData(engine.vptr, data)
+	DosQQmlApplicationEngineLoadData(engine.vptr, data)
 }
 
 func (engine *QQmlApplicationEngine) addImportPath(path string) {
-	dos.QQmlApplicationEngineAddImportPath(engine.vptr, path)
+	DosQQmlApplicationEngineAddImportPath(engine.vptr, path)
 }
 
 func (engine *QQmlApplicationEngine) SetRootContextProperty(name string, value *QVariant) {
-	ctx := dos.QQmlApplicationEngineContext(engine.vptr)
-	dos.DosQQmlContextSetContextProperty(ctx, name, value.vptr)
+	ctx := DosQQmlApplicationEngineContext(engine.vptr)
+	DosQQmlContextSetContextProperty(ctx, name, value.vptr)
 }
 
 func (engine *QQmlApplicationEngine) Delete() {
-	dos.QQmlApplicationEngineDelete(engine.vptr)
+	DosQQmlApplicationEngineDelete(engine.vptr)
 }

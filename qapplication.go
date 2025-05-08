@@ -15,29 +15,29 @@ func NewQApplication() *QApplication {
 }
 
 func (app *QApplication) Setup() {
-	dos.QApplicationCreate()
+	DosQApplicationCreate()
 	app.deleted = false
 }
 
 func (app *QApplication) ApplicationDirPath() string {
-	ptr := dos.QCoreApplicationApplicationDirPath()
-	defer dos.CharArrayDelete(ptr)
+	ptr := DosQCoreApplicationApplicationDirPath()
+	defer DosCharArrayDelete(ptr)
 	return charPtrToString(ptr)
 }
 
 func (app *QApplication) Exec() {
-	dos.QApplicationExec()
+	DosQApplicationExec()
 }
 
 func (app *QApplication) Quit() {
-	dos.QApplicationQuit()
+	DosQApplicationQuit()
 }
 
 func (app *QApplication) Delete() {
 	if app.deleted {
 		return
 	}
-	dos.QApplicationDelete()
+	DosQApplicationDelete()
 	app.deleted = true
 
 	runtime.UnlockOSThread()

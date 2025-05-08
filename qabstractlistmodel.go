@@ -13,16 +13,16 @@ func (model *QAbstractListModel) StaticMetaObject() *QMetaObject {
 }
 
 func (model *QAbstractListModel) ColumnCount(index *QModelIndex) int {
-	return dos.QAbstractListModelColumnCount(DosQAbstractListModel(model.vptr), index.vptr)
+	return DosQAbstractListModelColumnCount(DosQAbstractListModel(model.vptr), index.vptr)
 }
 
 func (model *QAbstractListModel) Parent(child *QModelIndex) *QModelIndex {
-	index := dos.QAbstractListModelParent(DosQAbstractListModel(model.vptr), child.vptr)
+	index := DosQAbstractListModelParent(DosQAbstractListModel(model.vptr), child.vptr)
 	return NewQModelIndexFromOther(index, OwnershipTake)
 }
 
 func (model *QAbstractListModel) Index(row int, column int, parent *QModelIndex) *QModelIndex {
-	index := dos.QAbstractListModelIndex(DosQAbstractListModel(model.vptr), row, column, parent.vptr)
+	index := DosQAbstractListModelIndex(DosQAbstractListModel(model.vptr), row, column, parent.vptr)
 	return NewQModelIndexFromOther(index, OwnershipTake)
 }
 
@@ -41,5 +41,5 @@ func (model *QAbstractListModel) Setup() {
 		CanFetchMore: DosCanFetchMoreCallback(qModelCanFetchMoreCallback),
 		FetchMore:    DosFetchMoreCallback(qModelFetchMoreCallback),
 	}
-	model.vptr = DosQObject(dos.QAbstractListModelCreate(unsafe.Pointer(model), model.StaticMetaObject().vptr, qObjectCallback, qAIMCallbacks))
+	model.vptr = DosQObject(DosQAbstractListModelCreate(unsafe.Pointer(model), model.StaticMetaObject().vptr, qObjectCallback, qAIMCallbacks))
 }

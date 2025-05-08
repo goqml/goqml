@@ -21,7 +21,7 @@ func NewQModelIndexFromOther(other DosQModelIndex, takeOwnership Ownership) *QMo
 }
 
 func (index *QModelIndex) Setup() {
-	index.vptr = dos.QModelIndexCreate()
+	index.vptr = DosQModelIndexCreate()
 }
 
 func (index *QModelIndex) SetupFromOther(other DosQModelIndex, takeOwnership Ownership) {
@@ -29,40 +29,40 @@ func (index *QModelIndex) SetupFromOther(other DosQModelIndex, takeOwnership Own
 	case OwnershipTake:
 		index.vptr = other
 	case OwnershipClone:
-		index.vptr = dos.QModelIndexCreateQModelIndex(other)
+		index.vptr = DosQModelIndexCreateQModelIndex(other)
 	default:
 		panic("invalid ownership")
 	}
 }
 
 func (index *QModelIndex) Row() int {
-	return dos.QModelIndexRow(index.vptr)
+	return DosQModelIndexRow(index.vptr)
 }
 
 func (index *QModelIndex) Column() int {
-	return dos.QModelIndexColumn(index.vptr)
+	return DosQModelIndexColumn(index.vptr)
 }
 
 func (index *QModelIndex) IsValid() bool {
-	return dos.QModelIndexIsValid(index.vptr)
+	return DosQModelIndexIsValid(index.vptr)
 }
 
 func (index *QModelIndex) Data(role int) *QVariant {
-	return NewQVariantFrom(dos.QModelIndexData(index.vptr, role), OwnershipTake)
+	return NewQVariantFrom(DosQModelIndexData(index.vptr, role), OwnershipTake)
 }
 
 func (index *QModelIndex) Parent() *QModelIndex {
-	return NewQModelIndexFromOther(dos.QModelIndexParent(index.vptr), OwnershipTake)
+	return NewQModelIndexFromOther(DosQModelIndexParent(index.vptr), OwnershipTake)
 }
 
 func (index *QModelIndex) Child(row int, column int) *QModelIndex {
-	return NewQModelIndexFromOther(dos.QModelIndexChild(index.vptr, row, column), OwnershipTake)
+	return NewQModelIndexFromOther(DosQModelIndexChild(index.vptr, row, column), OwnershipTake)
 }
 
 func (index *QModelIndex) Sibling(row int, column int) *QModelIndex {
-	return NewQModelIndexFromOther(dos.QModelIndexSibling(index.vptr, row, column), OwnershipTake)
+	return NewQModelIndexFromOther(DosQModelIndexSibling(index.vptr, row, column), OwnershipTake)
 }
 
 func (index *QModelIndex) InternalPtr() unsafe.Pointer {
-	return dos.QModelIndexInternalPointer(index.vptr)
+	return DosQModelIndexInternalPointer(index.vptr)
 }

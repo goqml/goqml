@@ -53,14 +53,14 @@ func (obj *QObject) StaticMetaObject() *QMetaObject {
 
 func (obj *QObject) Setup(inst IQObject, meta *QMetaObject) {
 	obj.owner = true
-	obj.vptr = dos.QObjectCreate(unsafe.Pointer(&inst), meta.vptr, DosQObjectCallBack(qObjectCallback))
+	obj.vptr = DosQObjectCreate(unsafe.Pointer(&inst), meta.vptr, DosQObjectCallBack(qObjectCallback))
 }
 
 func (obj *QObject) Delete() {
 	if obj.vptr == nil || !obj.owner {
 		return
 	}
-	dos.QObjectDelete(obj.vptr)
+	DosQObjectDelete(obj.vptr)
 	obj.vptr = nil
 }
 
@@ -81,14 +81,14 @@ func (obj *QObject) Emit(signalName string, arguments ...*QVariant) {
 	for _, argument := range arguments {
 		dosArguments = append(dosArguments, argument.vptr)
 	}
-	dos.QObjectSignalEmit(obj.vptr, signalName, len(dosArguments), DosQVariantArray(sliceToPtr(nil, dosArguments)))
+	DosQObjectSignalEmit(obj.vptr, signalName, len(dosArguments), DosQVariantArray(sliceToPtr(nil, dosArguments)))
 }
 
 func (obj *QObject) DeleteLater() {
 	if !obj.owner || obj.vptr == nil {
 		return
 	}
-	dos.QObjectDeleteLater(obj.vptr)
+	DosQObjectDeleteLater(obj.vptr)
 	obj.vptr = nil
 }
 
@@ -111,7 +111,7 @@ var qObjectCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer
 
 	obj.OnSlotCalled(slotName.StringVal(), arguments)
 
-	dosArgs := unsafe.Slice((*uintptr)(dosArguments), dosArgumentsLength)
-	dos.QVariantAssign(DosQVariant(dosArgs[0]), arguments[0].vptr)
+	dosArgs := unsafe.Slice(dosArguments, dosArgumentsLength)
+	DosQVariantAssign(DosQVariant(dosArgs[0]), arguments[0].vptr)
 	return 0
 })

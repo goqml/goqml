@@ -1,12 +1,19 @@
 package goqml
 
+/*
+#cgo LDFLAGS: -ldotherside
+
+#include "DOtherSide/DOtherSide.h"
+#include "DOtherSide/DOtherSideTypes.h"
+
+#include <stdlib.h>
+*/
+import "C"
+
 import (
-	"fmt"
-	"runtime"
 	"unsafe"
 
 	"github.com/shapled/goqml/util"
-	"github.com/shapled/puregostruct"
 )
 
 type (
@@ -17,7 +24,7 @@ type (
 	DosQUrl                  unsafe.Pointer
 	DosQHashIntByteArray     unsafe.Pointer
 	DosQVariant              unsafe.Pointer
-	DosQVariantArray         unsafe.Pointer // []DosQVariant
+	DosQVariantArray         *unsafe.Pointer
 	DosQMetaObjectConnection unsafe.Pointer
 	DosQModelIndex           unsafe.Pointer
 	DosQAbstractItemModel    unsafe.Pointer
@@ -25,8 +32,8 @@ type (
 	DosQAbstractListModel    unsafe.Pointer
 
 	DosQmlRegisterType struct {
-		major            int32
-		minor            int32
+		major            int
+		minor            int
 		uri              unsafe.Pointer
 		qml              unsafe.Pointer
 		staticMetaObject DosQMetaObject
@@ -38,42 +45,42 @@ type (
 
 	DosParameterDefinition struct {
 		name     unsafe.Pointer
-		metaType int32
+		metaType int
 	}
 
 	DosSignalDefinition struct {
 		name            unsafe.Pointer
-		parametersCount int32
+		parametersCount int
 		parameters      unsafe.Pointer // []DosParameterDefinition
 	}
 
 	DosSlotDefinition struct {
 		name            unsafe.Pointer
-		returnMetaType  int32
-		parametersCount int32
+		returnMetaType  int
+		parametersCount int
 		parameters      unsafe.Pointer // []DosParameterDefinition
 	}
 
 	DosPropertyDefinition struct {
 		name             unsafe.Pointer
-		propertyMetaType int32
+		propertyMetaType int
 		readSlot         unsafe.Pointer
 		writeSlot        unsafe.Pointer
 		notifySignal     unsafe.Pointer
 	}
 
 	DosSignalDefinitions struct {
-		count       int32
+		count       int
 		definitions unsafe.Pointer
 	}
 
 	DosSlotDefinitions struct {
-		count       int32
+		count       int
 		definitions unsafe.Pointer
 	}
 
 	DosPropertyDefinitions struct {
-		count       int32
+		count       int
 		definitions unsafe.Pointer
 	}
 
@@ -108,158 +115,573 @@ type (
 	DosQObjectConnectLambdaCallback uintptr // func(_ purego.CDecl, uintptr, int, DosQVariantArray) uintptr
 )
 
-type Dos struct {
-	// CharArray
-	CharArrayDelete func(unsafe.Pointer) `purego:"dos_chararray_delete"`
+// CharArray
+func DosCharArrayDelete(ptr unsafe.Pointer) {
+	C.dos_chararray_delete((*C.char)(ptr))
+}
 
-	// QCoreApplication
-	QCoreApplicationApplicationDirPath func() unsafe.Pointer `purego:"dos_qcoreapplication_application_dir_path"`
+// QCoreApplication
+func DosQCoreApplicationApplicationDirPath() unsafe.Pointer {
+	ptr := C.dos_qcoreapplication_application_dir_path()
+	return unsafe.Pointer(ptr)
+}
 
-	// QApplication
-	QApplicationCreate func() `purego:"dos_qapplication_create"`
-	QApplicationExec   func() `purego:"dos_qapplication_exec"`
-	QApplicationQuit   func() `purego:"dos_qapplication_quit"`
-	QApplicationDelete func() `purego:"dos_qapplication_delete"`
+// QApplication
+func DosQApplicationCreate() {
+	C.dos_qapplication_create()
+}
 
-	// QGuiApplication
-	QGuiApplicationCreate func() `purego:"dos_qguiapplication_create"`
-	QGuiApplicationExec   func() `purego:"dos_qguiapplication_exec"`
-	QGuiApplicationQuit   func() `purego:"dos_qguiapplication_quit"`
-	QGuiApplicationDelete func() `purego:"dos_qguiapplication_delete"`
+func DosQApplicationExec() {
+	C.dos_qapplication_exec()
+}
 
-	// QQmlContext
-	DosQQmlContextSetContextProperty func(unsafe.Pointer, string, DosQVariant) `purego:"dos_qqmlcontext_setcontextproperty"`
+func DosQApplicationQuit() {
+	C.dos_qapplication_quit()
+}
 
-	// QQmlApplicationEngine
-	QQmlApplicationEngineCreate        func() unsafe.Pointer               `purego:"dos_qqmlapplicationengine_create"`
-	QQmlApplicationEngineLoad          func(unsafe.Pointer, string)        `purego:"dos_qqmlapplicationengine_load"`
-	QQmlApplicationEngineLoadUrl       func(unsafe.Pointer, DosQUrl)       `purego:"dos_qqmlapplicationengine_load_url"`
-	QQmlApplicationEngineLoadData      func(unsafe.Pointer, string)        `purego:"dos_qqmlapplicationengine_load_data"`
-	QQmlApplicationEngineAddImportPath func(unsafe.Pointer, string)        `purego:"dos_qqmlapplicationengine_add_import_path"`
-	QQmlApplicationEngineContext       func(unsafe.Pointer) unsafe.Pointer `purego:"dos_qqmlapplicationengine_context"`
-	QQmlApplicationEngineDelete        func(unsafe.Pointer)                `purego:"dos_qqmlapplicationengine_delete"`
+func DosQApplicationDelete() {
+	C.dos_qapplication_delete()
+}
 
-	// QVariant
-	QVariantCreate         func() DosQVariant               `purego:"dos_qvariant_create"`
-	QVariantCreateInt      func(int) DosQVariant            `purego:"dos_qvariant_create_int"`
-	QVariantCreateBool     func(bool) DosQVariant           `purego:"dos_qvariant_create_bool"`
-	QVariantCreateString   func(string) DosQVariant         `purego:"dos_qvariant_create_string"`
-	QVariantCreateQObject  func(DosQObject) DosQVariant     `purego:"dos_qvariant_create_qobject"`
-	QVariantCreateQVariant func(DosQVariant) DosQVariant    `purego:"dos_qvariant_create_qvariant"`
-	QVariantCreateFloat    func(float32) DosQVariant        `purego:"dos_qvariant_create_float"`
-	QVariantCreateDouble   func(float64) DosQVariant        `purego:"dos_qvariant_create_double"`
-	QVariantDelete         func(DosQVariant)                `purego:"dos_qvariant_delete"`
-	QVariantIsNull         func(DosQVariant) bool           `purego:"dos_qvariant_isnull"`
-	QVariantToInt          func(DosQVariant) int            `purego:"dos_qvariant_toInt"`
-	QVariantToBool         func(DosQVariant) bool           `purego:"dos_qvariant_toBool"`
-	QVariantToString       func(DosQVariant) unsafe.Pointer `purego:"dos_qvariant_toString"`
-	QVariantToDouble       func(DosQVariant) float64        `purego:"dos_qvariant_toDouble"`
-	QVariantToFloat        func(DosQVariant) float32        `purego:"dos_qvariant_toFloat"`
-	QVariantSetInt         func(DosQVariant, int)           `purego:"dos_qvariant_setInt"`
-	QVariantSetBool        func(DosQVariant, bool)          `purego:"dos_qvariant_setBool"`
-	QVariantSetString      func(DosQVariant, string)        `purego:"dos_qvariant_setString"`
-	QVariantAssign         func(DosQVariant, DosQVariant)   `purego:"dos_qvariant_assign"`
-	QVariantSetFloat       func(DosQVariant, float32)       `purego:"dos_qvariant_setFloat"`
-	QVariantSetDouble      func(DosQVariant, float64)       `purego:"dos_qvariant_setDouble"`
-	QVariantSetQObject     func(DosQVariant, DosQObject)    `purego:"dos_qvariant_setQObject"`
+// QGuiApplication
+func DosQGuiApplicationCreate() {
+	C.dos_qguiapplication_create()
+}
 
-	// QObject
-	QObjectQMetaObject                    func() DosQMetaObject                                                                                `purego:"dos_qobject_qmetaobject"`
-	QObjectCreate                         func(unsafe.Pointer, DosQMetaObject, DosQObjectCallBack) DosQObject                                  `purego:"dos_qobject_create"`
-	QObjectObjectName                     func(DosQObject) string                                                                              `purego:"dos_qobject_objectName"`
-	QObjectSetObjectName                  func(DosQObject, string)                                                                             `purego:"dos_qobject_setObjectName"`
-	QObjectSignalEmit                     func(DosQObject, string, int, DosQVariantArray)                                                      `purego:"dos_qobject_signal_emit"`
-	QObjectConnectStatic                  func(DosQObject, string, DosQObject, string, int32) DosQMetaObjectConnection                         `purego:"dos_qobject_connect_static"`
-	QObjectConnectLambdaStatic            func(DosQObject, string, DosQObjectConnectLambdaCallback, uintptr, int32) DosQMetaObjectConnection   `purego:"dos_qobject_connect_lambda_static"`
-	QObjectConnectLambdaWithContextStatic func(DosQObject, string, DosQObject, unsafe.Pointer, unsafe.Pointer, int32) DosQMetaObjectConnection `purego:"dos_qobject_connect_lambda_with_context_static"`
-	QObjectDisconnectStatic               func(DosQObject, string, DosQObject, string)                                                         `purego:"dos_qobject_disconnect_static"`
-	QObjectDisconnectWithConnectionStatic func(DosQMetaObjectConnection)                                                                       `purego:"dos_qobject_disconnect_with_connection_static"`
-	QObjectDelete                         func(DosQObject)                                                                                     `purego:"dos_qobject_delete"`
-	QObjectDeleteLater                    func(DosQObject)                                                                                     `purego:"dos_qobject_deleteLater"`
-	SignalMacro                           func(string) string                                                                                  `purego:"dos_signal_macro"`
-	SlotMacro                             func(string) string                                                                                  `purego:"dos_slot_macro"`
+func DosQGuiApplicationExec() {
+	C.dos_qguiapplication_exec()
+}
 
-	// QMetaObject::Connection
-	QMetaObjectConnectionDelete func(DosQMetaObjectConnection) `purego:"dos_qmetaobject_connection_delete"`
+func DosQGuiApplicationQuit() {
+	C.dos_qguiapplication_quit()
+}
 
-	// QAbstractItemModel
-	QAbstractItemModelQMetaObject func() DosQMetaObject `purego:"dos_qabstractitemmodel_qmetaobject"`
+func DosQGuiApplicationDelete() {
+	C.dos_qguiapplication_delete()
+}
 
-	// QMetaObject
-	QMetaObjectCreate       func(DosQMetaObject, string, *DosSignalDefinitions, *DosSlotDefinitions, *DosPropertyDefinitions) DosQMetaObject `purego:"dos_qmetaobject_create"`
-	QMetaObjectDelete       func(DosQMetaObject)                                                                                             `purego:"dos_qmetaobject_delete"`
-	QMetaObjectInvokeMethod func(DosQObject, unsafe.Pointer, unsafe.Pointer, int) bool                                                       `purego:"dos_qmetaobject_invoke_method"`
+// QQmlContext
+func DosQQmlContextSetContextProperty(ctx unsafe.Pointer, name string, value DosQVariant) {
+	s1 := C.CString(name)
+	defer C.free(unsafe.Pointer(s1))
+	C.dos_qqmlcontext_setcontextproperty(ctx, s1, unsafe.Pointer(value))
+}
 
-	// QUrl
-	QUrlCreate   func(string, int) DosQUrl    `purego:"dos_qurl_create"`
-	QUrlDelete   func(DosQUrl)                `purego:"dos_qurl_delete"`
-	QUrlToString func(DosQUrl) unsafe.Pointer `purego:"dos_qurl_to_string"`
+// QQmlApplicationEngine
+func DosQQmlApplicationEngineCreate() unsafe.Pointer {
+	return C.dos_qqmlapplicationengine_create()
+}
 
-	// QQuickView
-	QQuickViewCreate    func() unsafe.Pointer        `purego:"dos_qquickview_create"`
-	QQuickViewDelete    func(unsafe.Pointer)         `purego:"dos_qquickview_delete"`
-	QQuickViewShow      func(unsafe.Pointer)         `purego:"dos_qquickview_show"`
-	QQuickViewSource    func(unsafe.Pointer) string  `purego:"dos_qquickview_source"`
-	QQuickViewSetSource func(unsafe.Pointer, string) `purego:"dos_qquickview_set_source"`
+func DosQQmlApplicationEngineLoad(engine unsafe.Pointer, path string) {
+	C.dos_qqmlapplicationengine_load(engine, C.CString(path))
+}
 
-	// QHash<int, QByteArra>
-	QHashIntByteArrayCreate func() DosQHashIntByteArray             `purego:"dos_qhash_int_qbytearray_create"`
-	QHashIntByteArrayDelete func(DosQHashIntByteArray)              `purego:"dos_qhash_int_qbytearray_delete"`
-	QHashIntByteArrayInsert func(DosQHashIntByteArray, int, string) `purego:"dos_qhash_int_qbytearray_insert"`
-	QHashIntByteArrayValue  func(DosQHashIntByteArray, int) string  `purego:"dos_qhash_int_qbytearray_value"`
+func DosQQmlApplicationEngineLoadUrl(engine unsafe.Pointer, url DosQUrl) {
+	C.dos_qqmlapplicationengine_load_url(engine, unsafe.Pointer(url))
+}
 
-	// QModelIndex
-	QModelIndexCreate            func() DosQModelIndex                         `purego:"dos_qmodelindex_create"`
-	QModelIndexCreateQModelIndex func(DosQModelIndex) DosQModelIndex           `purego:"dos_qmodelindex_create_qmodelindex"`
-	QModelIndexDelete            func(DosQModelIndex)                          `purego:"dos_qmodelindex_delete"`
-	QModelIndexRow               func(DosQModelIndex) int                      `purego:"dos_qmodelindex_row"`
-	QModelIndexColumn            func(DosQModelIndex) int                      `purego:"dos_qmodelindex_column"`
-	QModelIndexIsValid           func(DosQModelIndex) bool                     `purego:"dos_qmodelindex_isValid"`
-	QModelIndexData              func(DosQModelIndex, int) DosQVariant         `purego:"dos_qmodelindex_data"`
-	QModelIndexParent            func(DosQModelIndex) DosQModelIndex           `purego:"dos_qmodelindex_parent"`
-	QModelIndexChild             func(DosQModelIndex, int, int) DosQModelIndex `purego:"dos_qmodelindex_child"`
-	QModelIndexSibling           func(DosQModelIndex, int, int) DosQModelIndex `purego:"dos_qmodelindex_sibling"`
-	QModelIndexAssign            func(DosQModelIndex, DosQModelIndex)          `purego:"dos_qmodelindex_assign"`
-	QModelIndexInternalPointer   func(DosQModelIndex) unsafe.Pointer           `purego:"dos_qmodelindex_internalPointer"`
+func DosQQmlApplicationEngineLoadData(engine unsafe.Pointer, data string) {
+	C.dos_qqmlapplicationengine_load_data(engine, C.CString(data))
+}
 
-	// QAbstractItemModel
-	QAbstractItemModelCreate             func(unsafe.Pointer, DosQMetaObject, uintptr, DosQAbstractItemModelCallbacks) DosQAbstractItemModel `purego:"dos_qabstractitemmodel_create"`
-	QAbstractItemModelBeginInsertRows    func(DosQAbstractItemModel, DosQModelIndex, int, int)                                               `purego:"dos_qabstractitemmodel_beginInsertRows"`
-	QAbstractItemModelEndInsertRows      func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endInsertRows"`
-	QAbstractItemModelBeginRemoveRows    func(DosQAbstractItemModel, DosQModelIndex, int, int)                                               `purego:"dos_qabstractitemmodel_beginRemoveRows"`
-	QAbstractItemModelEndRemoveRows      func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endRemoveRows"`
-	QAbstractItemModelBeginInsertColumns func(DosQAbstractItemModel, DosQModelIndex, int, int)                                               `purego:"dos_qabstractitemmodel_beginInsertColumns"`
-	QAbstractItemModelEndInsertColumns   func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endInsertColumns"`
-	QAbstractItemModelBeginRemoveColumns func(DosQAbstractItemModel, DosQModelIndex, int, int)                                               `purego:"dos_qabstractitemmodel_beginRemoveColumns"`
-	QAbstractItemModelEndRemoveColumns   func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endRemoveColumns"`
-	QAbstractItemModelBeginResetModel    func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_beginResetModel"`
-	QAbstractItemModelEndResetModel      func(DosQAbstractItemModel)                                                                         `purego:"dos_qabstractitemmodel_endResetModel"`
-	QAbstractItemModelDataChanged        func(DosQAbstractItemModel, DosQModelIndex, DosQModelIndex, unsafe.Pointer, int)                    `purego:"dos_qabstractitemmodel_dataChanged"`
-	QAbstractItemModelCreateIndex        func(DosQAbstractItemModel, int, int, unsafe.Pointer) DosQModelIndex                                `purego:"dos_qabstractitemmodel_createIndex"`
-	QAbstractItemModelHasChildren        func(DosQAbstractItemModel, DosQModelIndex) bool                                                    `purego:"dos_qabstractitemmodel_hasChildren"`
-	QAbstractItemModelHasIndex           func(DosQAbstractItemModel, int, int, DosQModelIndex) bool                                          `purego:"dos_qabstractitemmodel_hasIndex"`
-	QAbstractItemModelCanFetchMore       func(DosQAbstractItemModel, DosQModelIndex) bool                                                    `purego:"dos_qabstractitemmodel_canFetchMore"`
-	QAbstractItemModelFetchMore          func(DosQAbstractItemModel, DosQModelIndex)                                                         `purego:"dos_qabstractitemmodel_fetchMore"`
+func DosQQmlApplicationEngineAddImportPath(engine unsafe.Pointer, path string) {
+	C.dos_qqmlapplicationengine_add_import_path(engine, C.CString(path))
+}
 
-	// QResource
-	QResourceRegister func(string) `purego:"dos_qresource_register"`
+func DosQQmlApplicationEngineContext(engine unsafe.Pointer) unsafe.Pointer {
+	return C.dos_qqmlapplicationengine_context(engine)
+}
 
-	// QDeclarative
-	QDeclarativeQmlRegisterType          func(*DosQmlRegisterType) int32 `purego:"dos_qdeclarative_qmlregistertype"`
-	QDeclarativeQmlRegisterSingletonType func(*DosQmlRegisterType) int32 `purego:"dos_qdeclarative_qmlregistersingletontype"`
+func DosQQmlApplicationEngineDelete(engine unsafe.Pointer) {
+	C.dos_qqmlapplicationengine_delete(engine)
+}
 
-	// QAbstractListModel
-	QAbstractListModelQMetaObject func() DosQMetaObject                                                                               `purego:"dos_qabstractlistmodel_qmetaobject"`
-	QAbstractListModelCreate      func(unsafe.Pointer, DosQMetaObject, uintptr, DosQAbstractItemModelCallbacks) DosQAbstractListModel `purego:"dos_qabstractlistmodel_create"`
-	QAbstractListModelColumnCount func(DosQAbstractListModel, DosQModelIndex) int                                                     `purego:"dos_qabstractlistmodel_columnCount"`
-	QAbstractListModelParent      func(DosQAbstractListModel, DosQModelIndex) DosQModelIndex                                          `purego:"dos_qabstractlistmodel_parent"`
-	QAbstractListModelIndex       func(DosQAbstractListModel, int, int, DosQModelIndex) DosQModelIndex                                `purego:"dos_qabstractlistmodel_index"`
+// QVariant
+func DosQVariantCreate() DosQVariant {
+	return DosQVariant(C.dos_qvariant_create())
+}
 
-	// QAbstractTableModel
-	QAbstractTableModelQMetaObject func() DosQMetaObject                                                                                `purego:"dos_qabstracttablemodel_qmetaobject"`
-	QAbstractTableModelCreate      func(unsafe.Pointer, DosQMetaObject, uintptr, DosQAbstractItemModelCallbacks) DosQAbstractTableModel `purego:"dos_qabstracttablemodel_create"`
-	QAbstractTableModelParent      func(DosQAbstractTableModel, DosQModelIndex) DosQModelIndex                                          `purego:"dos_qabstracttablemodel_parent"`
-	QAbstractTableModelIndex       func(DosQAbstractTableModel, int, int, DosQModelIndex) DosQModelIndex                                `purego:"dos_qabstracttablemodel_index"`
+func DosQVariantCreateInt(value int) DosQVariant {
+	return DosQVariant(C.dos_qvariant_create_int(C.int(value)))
+}
+
+func DosQVariantCreateBool(value bool) DosQVariant {
+	return DosQVariant(C.dos_qvariant_create_bool(C.bool(value)))
+}
+
+func DosQVariantCreateString(value string) DosQVariant {
+
+	return DosQVariant(C.dos_qvariant_create_string(C.CString(value)))
+}
+
+func DosQVariantCreateQObject(obj DosQObject) DosQVariant {
+	return DosQVariant(C.dos_qvariant_create_qobject(unsafe.Pointer(obj)))
+}
+
+func DosQVariantCreateQVariant(variant DosQVariant) DosQVariant {
+	return DosQVariant(C.dos_qvariant_create_qvariant(unsafe.Pointer(variant)))
+}
+
+func DosQVariantCreateFloat(value float32) DosQVariant {
+	return DosQVariant(C.dos_qvariant_create_float(C.float(value)))
+}
+
+func DosQVariantCreateDouble(value float64) DosQVariant {
+	return DosQVariant(C.dos_qvariant_create_double(C.double(value)))
+}
+
+func DosQVariantDelete(variant DosQVariant) {
+	C.dos_qvariant_delete(unsafe.Pointer(variant))
+}
+
+func DosQVariantIsNull(variant DosQVariant) bool {
+	return bool(C.dos_qvariant_isnull(unsafe.Pointer(variant)))
+}
+
+func DosQVariantToInt(variant DosQVariant) int {
+	return int(C.dos_qvariant_toInt(unsafe.Pointer(variant)))
+}
+
+func DosQVariantToBool(variant DosQVariant) bool {
+	return bool(C.dos_qvariant_toBool(unsafe.Pointer(variant)))
+}
+
+func DosQVariantToString(variant DosQVariant) unsafe.Pointer {
+	return unsafe.Pointer(C.dos_qvariant_toString(unsafe.Pointer(variant)))
+}
+
+func DosQVariantToDouble(variant DosQVariant) float64 {
+	return float64(C.dos_qvariant_toDouble(unsafe.Pointer(variant)))
+}
+
+func DosQVariantToFloat(variant DosQVariant) float32 {
+	return float32(C.dos_qvariant_toFloat(unsafe.Pointer(variant)))
+}
+
+func DosQVariantSetInt(variant DosQVariant, value int) {
+	C.dos_qvariant_setInt(unsafe.Pointer(variant), C.int(value))
+}
+
+func DosQVariantSetBool(variant DosQVariant, value bool) {
+	C.dos_qvariant_setBool(unsafe.Pointer(variant), C.bool(value))
+}
+
+func DosQVariantSetString(variant DosQVariant, value string) {
+	str := C.CString(value)
+	defer C.free(unsafe.Pointer(str))
+	C.dos_qvariant_setString(unsafe.Pointer(variant), str)
+}
+
+func DosQVariantAssign(variant DosQVariant, other DosQVariant) {
+	C.dos_qvariant_assign(unsafe.Pointer(variant), unsafe.Pointer(other))
+}
+
+func DosQVariantSetFloat(variant DosQVariant, value float32) {
+	C.dos_qvariant_setFloat(unsafe.Pointer(variant), C.float(value))
+}
+
+func DosQVariantSetDouble(variant DosQVariant, value float64) {
+	C.dos_qvariant_setDouble(unsafe.Pointer(variant), C.double(value))
+}
+
+func DosQVariantSetQObject(variant DosQVariant, obj DosQObject) {
+	C.dos_qvariant_setQObject(unsafe.Pointer(variant), unsafe.Pointer(obj))
+}
+
+// QObject
+func DosQObjectQMetaObject() DosQMetaObject {
+	return DosQMetaObject(C.dos_qobject_qmetaobject())
+}
+
+func DosQObjectCreate(inst unsafe.Pointer, vptr DosQMetaObject, callback DosQObjectCallBack) DosQObject {
+	return DosQObject(C.dos_qobject_create(inst, unsafe.Pointer(vptr), (*[0]byte)(unsafe.Pointer(callback))))
+}
+
+func DosQObjectObjectName(obj DosQObject) string {
+	str := C.dos_qobject_objectName(unsafe.Pointer(obj))
+	defer C.free(unsafe.Pointer(str))
+	return C.GoString(str)
+}
+
+func DosQObjectSetObjectName(obj DosQObject, name string) {
+	str := C.CString(name)
+	defer C.free(unsafe.Pointer(str))
+	C.dos_qobject_setObjectName(unsafe.Pointer(obj), str)
+}
+
+func DosQObjectSignalEmit(obj DosQObject, signal string, argc int, argv DosQVariantArray) {
+	str := C.CString(signal)
+	defer C.free(unsafe.Pointer(str))
+	C.dos_qobject_signal_emit(unsafe.Pointer(obj), str, C.int(argc), (*unsafe.Pointer)(argv))
+}
+
+func DosQObjectConnectStatic(sender DosQObject, signal string, receiver DosQObject, method string, connectionType int) DosQMetaObjectConnection {
+	str1 := C.CString(signal)
+	defer C.free(unsafe.Pointer(str1))
+	str2 := C.CString(method)
+	defer C.free(unsafe.Pointer(str2))
+	return DosQMetaObjectConnection(C.dos_qobject_connect_static(unsafe.Pointer(sender), str1, unsafe.Pointer(receiver), str2, C.DosQtConnectionType(connectionType)))
+}
+
+func DosQObjectConnectLambdaStatic(sender DosQObject, signal string, callback DosQObjectConnectLambdaCallback, context uintptr, connectionType int) DosQMetaObjectConnection {
+	str := C.CString(signal)
+	defer C.free(unsafe.Pointer(str))
+	return DosQMetaObjectConnection(C.dos_qobject_connect_lambda_static(unsafe.Pointer(sender), str, (*[0]byte)(unsafe.Pointer(callback)), unsafe.Pointer(context), C.DosQtConnectionType(connectionType)))
+}
+
+func DosQObjectConnectLambdaWithContextStatic(sender DosQObject, signal string, receiver DosQObject, context unsafe.Pointer, data unsafe.Pointer, connectionType int) DosQMetaObjectConnection {
+	str := C.CString(signal)
+	defer C.free(unsafe.Pointer(str))
+	return DosQMetaObjectConnection(C.dos_qobject_connect_lambda_with_context_static(unsafe.Pointer(sender), str, unsafe.Pointer(receiver), (*[0]byte)(context), data, C.DosQtConnectionType(connectionType)))
+}
+
+func DosQObjectDisconnectStatic(sender DosQObject, signal string, receiver DosQObject, method string) {
+	str1 := C.CString(signal)
+	defer C.free(unsafe.Pointer(str1))
+	str2 := C.CString(method)
+	defer C.free(unsafe.Pointer(str2))
+	C.dos_qobject_disconnect_static(unsafe.Pointer(sender), str1, unsafe.Pointer(receiver), str2)
+}
+
+func DosQObjectDisconnectWithConnectionStatic(connection DosQMetaObjectConnection) {
+	C.dos_qobject_disconnect_with_connection_static(unsafe.Pointer(connection))
+}
+
+func DosQObjectDelete(obj DosQObject) {
+	C.dos_qobject_delete(unsafe.Pointer(obj))
+}
+
+func DosQObjectDeleteLater(obj DosQObject) {
+	C.dos_qobject_deleteLater(unsafe.Pointer(obj))
+}
+
+func DosSignalMacro(signal string) string {
+	str := C.CString(signal)
+	defer C.free(unsafe.Pointer(str))
+	return C.GoString(C.dos_signal_macro(str))
+}
+
+func DosSlotMacro(slot string) string {
+	str := C.CString(slot)
+	defer C.free(unsafe.Pointer(str))
+	return C.GoString(C.dos_slot_macro(str))
+}
+
+// QMetaObject::Connection
+func DosQMetaObjectConnectionDelete(connection DosQMetaObjectConnection) {
+	C.dos_qmetaobject_connection_delete(unsafe.Pointer(connection))
+}
+
+// QAbstractItemModel
+func DosQAbstractItemModelQMetaObject() DosQMetaObject {
+	return DosQMetaObject(C.dos_qabstractitemmodel_qmetaobject())
+}
+
+// QMetaObject
+func DosQMetaObjectCreate(parentMetaObject DosQMetaObject, className string, signals []*SignalDefinition, slots []*SlotDefinition, properties []*PropertyDefinition) DosQMetaObject {
+	str := C.CString(className)
+	defer C.free(unsafe.Pointer(str))
+	return DosQMetaObject(C.dos_qmetaobject_create(unsafe.Pointer(parentMetaObject), str, signals, slots, properties))
+}
+
+func DosQMetaObjectDelete(metaObject DosQMetaObject) {
+	C.dos_qmetaobject_delete(unsafe.Pointer(metaObject))
+}
+
+func DosQMetaObjectInvokeMethod(obj DosQObject, callback unsafe.Pointer, callbackData unsafe.Pointer, connectionType int) bool {
+	return bool(C.dos_qmetaobject_invoke_method(unsafe.Pointer(obj), (*[0]byte)(callback), callbackData, C.DosQtConnectionType(connectionType)))
+}
+
+// QUrl
+func DosQUrlCreate(url string, mode int) DosQUrl {
+	str := C.CString(url)
+	defer C.free(unsafe.Pointer(str))
+	return DosQUrl(C.dos_qurl_create(str, C.int(mode)))
+}
+
+func DosQUrlDelete(url DosQUrl) {
+	C.dos_qurl_delete(unsafe.Pointer(url))
+}
+
+func DosQUrlToString(url DosQUrl) unsafe.Pointer {
+	return unsafe.Pointer(C.dos_qurl_to_string(unsafe.Pointer(url)))
+}
+
+// QQuickView
+func DosQQuickViewCreate() unsafe.Pointer {
+	return C.dos_qquickview_create()
+}
+
+func DosQQuickViewDelete(view unsafe.Pointer) {
+	C.dos_qquickview_delete(view)
+}
+
+func DosQQuickViewShow(view unsafe.Pointer) {
+	C.dos_qquickview_show(view)
+}
+
+func DosQQuickViewSource(view unsafe.Pointer) string {
+	str := C.dos_qquickview_source(view)
+	defer C.free(unsafe.Pointer(str))
+	return C.GoString(str)
+}
+
+func DosQQuickViewSetSource(view unsafe.Pointer, source string) {
+	str := C.CString(source)
+	defer C.free(unsafe.Pointer(str))
+	C.dos_qquickview_set_source(view, str)
+}
+
+// QHash<int, QByteArray>
+func DosQHashIntByteArrayCreate() DosQHashIntByteArray {
+	return DosQHashIntByteArray(C.dos_qhash_int_qbytearray_create())
+}
+
+func DosQHashIntByteArrayDelete(hash DosQHashIntByteArray) {
+	C.dos_qhash_int_qbytearray_delete(unsafe.Pointer(hash))
+}
+
+func DosQHashIntByteArrayInsert(hash DosQHashIntByteArray, key int, value string) {
+	str := C.CString(value)
+	defer C.free(unsafe.Pointer(str))
+	C.dos_qhash_int_qbytearray_insert(unsafe.Pointer(hash), C.int(key), str)
+}
+
+func DosQHashIntByteArrayValue(hash DosQHashIntByteArray, key int) string {
+	str := C.dos_qhash_int_qbytearray_value(unsafe.Pointer(hash), C.int(key))
+	defer C.free(unsafe.Pointer(str))
+	return C.GoString(str)
+}
+
+// QModelIndex
+func DosQModelIndexCreate() DosQModelIndex {
+	return DosQModelIndex(C.dos_qmodelindex_create())
+}
+
+func DosQModelIndexCreateQModelIndex(index DosQModelIndex) DosQModelIndex {
+	return DosQModelIndex(C.dos_qmodelindex_create_qmodelindex(unsafe.Pointer(index)))
+}
+
+func DosQModelIndexDelete(index DosQModelIndex) {
+	C.dos_qmodelindex_delete(unsafe.Pointer(index))
+}
+
+func DosQModelIndexRow(index DosQModelIndex) int {
+	return int(C.dos_qmodelindex_row(unsafe.Pointer(index)))
+}
+
+func DosQModelIndexColumn(index DosQModelIndex) int {
+	return int(C.dos_qmodelindex_column(unsafe.Pointer(index)))
+}
+
+func DosQModelIndexIsValid(index DosQModelIndex) bool {
+	return bool(C.dos_qmodelindex_isValid(unsafe.Pointer(index)))
+}
+
+func DosQModelIndexData(index DosQModelIndex, role int) DosQVariant {
+	return DosQVariant(C.dos_qmodelindex_data(unsafe.Pointer(index), C.int(role)))
+}
+
+func DosQModelIndexParent(index DosQModelIndex) DosQModelIndex {
+	return DosQModelIndex(C.dos_qmodelindex_parent(unsafe.Pointer(index)))
+}
+
+func DosQModelIndexChild(index DosQModelIndex, row int, column int) DosQModelIndex {
+	return DosQModelIndex(C.dos_qmodelindex_child(unsafe.Pointer(index), C.int(row), C.int(column)))
+}
+
+func DosQModelIndexSibling(index DosQModelIndex, row int, column int) DosQModelIndex {
+	return DosQModelIndex(C.dos_qmodelindex_sibling(unsafe.Pointer(index), C.int(row), C.int(column)))
+}
+
+func DosQModelIndexAssign(index DosQModelIndex, other DosQModelIndex) {
+	C.dos_qmodelindex_assign(unsafe.Pointer(index), unsafe.Pointer(other))
+}
+
+func DosQModelIndexInternalPointer(index DosQModelIndex) unsafe.Pointer {
+	return C.dos_qmodelindex_internalPointer(unsafe.Pointer(index))
+}
+
+// QAbstractItemModel
+func DosQAbstractItemModelCreate(
+	userData unsafe.Pointer,
+	metaObject DosQMetaObject,
+	callbacks uintptr,
+	modelCallbacks DosQAbstractItemModelCallbacks,
+) DosQAbstractItemModel {
+	return DosQAbstractItemModel(C.dos_qabstractitemmodel_create(userData, unsafe.Pointer(metaObject), (*[0]byte)(unsafe.Pointer(callbacks)), modelCallbacks))
+}
+
+func DosQAbstractItemModelBeginInsertRows(
+	model DosQAbstractItemModel,
+	parent DosQModelIndex,
+	first int,
+	last int,
+) {
+	C.dos_qabstractitemmodel_beginInsertRows(model, parent, C.int(first), C.int(last))
+}
+
+func DosQAbstractItemModelEndInsertRows(model DosQAbstractItemModel) {
+	C.dos_qabstractitemmodel_endInsertRows(model)
+}
+
+func DosQAbstractItemModelBeginRemoveRows(
+	model DosQAbstractItemModel,
+	parent DosQModelIndex,
+	first int,
+	last int,
+) {
+	C.dos_qabstractitemmodel_beginRemoveRows(model, parent, C.int(first), C.int(last))
+}
+
+func DosQAbstractItemModelEndRemoveRows(model DosQAbstractItemModel) {
+	C.dos_qabstractitemmodel_endRemoveRows(model)
+}
+
+func DosQAbstractItemModelBeginInsertColumns(
+	model DosQAbstractItemModel,
+	parent DosQModelIndex,
+	first int,
+	last int,
+) {
+	C.dos_qabstractitemmodel_beginInsertColumns(model, parent, C.int(first), C.int(last))
+}
+
+func DosQAbstractItemModelEndInsertColumns(model DosQAbstractItemModel) {
+	C.dos_qabstractitemmodel_endInsertColumns(model)
+}
+
+func DosQAbstractItemModelBeginRemoveColumns(
+	model DosQAbstractItemModel,
+	parent DosQModelIndex,
+	first int,
+	last int,
+) {
+	C.dos_qabstractitemmodel_beginRemoveColumns(model, parent, C.int(first), C.int(last))
+}
+
+func DosQAbstractItemModelEndRemoveColumns(model DosQAbstractItemModel) {
+	C.dos_qabstractitemmodel_endRemoveColumns(model)
+}
+
+func DosQAbstractItemModelBeginResetModel(model DosQAbstractItemModel) {
+	C.dos_qabstractitemmodel_beginResetModel(model)
+}
+
+func DosQAbstractItemModelEndResetModel(model DosQAbstractItemModel) {
+	C.dos_qabstractitemmodel_endResetModel(model)
+}
+
+func DosQAbstractItemModelDataChanged(
+	model DosQAbstractItemModel,
+	topLeft DosQModelIndex,
+	bottomRight DosQModelIndex,
+	roles unsafe.Pointer,
+	roleCount int,
+) {
+	C.dos_qabstractitemmodel_dataChanged(model, topLeft, bottomRight, roles, C.int(roleCount))
+}
+
+func DosQAbstractItemModelCreateIndex(
+	model DosQAbstractItemModel,
+	row int,
+	column int,
+	internalPointer unsafe.Pointer,
+) DosQModelIndex {
+	return C.dos_qabstractitemmodel_createIndex(model, C.int(row), C.int(column), internalPointer)
+}
+
+func DosQAbstractItemModelHasChildren(model DosQAbstractItemModel, parent DosQModelIndex) bool {
+	return bool(C.dos_qabstractitemmodel_hasChildren(model, parent))
+}
+
+func DosQAbstractItemModelHasIndex(
+	model DosQAbstractItemModel,
+	row int,
+	column int,
+	parent DosQModelIndex,
+) bool {
+	return bool(C.dos_qabstractitemmodel_hasIndex(model, C.int(row), C.int(column), parent))
+}
+
+func DosQAbstractItemModelCanFetchMore(model DosQAbstractItemModel, parent DosQModelIndex) bool {
+	return bool(C.dos_qabstractitemmodel_canFetchMore(model, parent))
+}
+
+func DosQAbstractItemModelFetchMore(model DosQAbstractItemModel, parent DosQModelIndex) {
+	C.dos_qabstractitemmodel_fetchMore(model, parent)
+}
+
+// QResource 相关字段转换为独立函数
+func DosQResourceRegister(resourcePath string) {
+	C.dos_qresource_register(resourcePath)
+}
+
+// QDeclarative 相关字段转换为独立函数
+func DosQDeclarativeQmlRegisterType(registerType *DosQmlRegisterType) int {
+	return C.dos_qdeclarative_qmlregistertype(registerType)
+}
+
+func DosQDeclarativeQmlRegisterSingletonType(registerType *DosQmlRegisterType) int {
+	return C.dos_qdeclarative_qmlregistersingletontype(registerType)
+}
+
+// QAbstractListModel 相关字段转换为独立函数
+func DosQAbstractListModelQMetaObject() DosQMetaObject {
+	return C.dos_qabstractlistmodel_qmetaobject()
+}
+
+func DosQAbstractListModelCreate(
+	userData unsafe.Pointer,
+	metaObject DosQMetaObject,
+	callback uintptr,
+	modelCallbacks DosQAbstractItemModelCallbacks,
+) DosQAbstractListModel {
+	return C.dos_qabstractlistmodel_create(userData, metaObject, C.uintptr_t(callback), modelCallbacks)
+}
+
+func DosQAbstractListModelColumnCount(model DosQAbstractListModel, index DosQModelIndex) int {
+	return int(C.dos_qabstractlistmodel_columnCount(model, index))
+}
+
+func DosQAbstractListModelParent(model DosQAbstractListModel, index DosQModelIndex) DosQModelIndex {
+	return C.dos_qabstractlistmodel_parent(model, index)
+}
+
+func DosQAbstractListModelIndex(
+	model DosQAbstractListModel,
+	row int,
+	column int,
+	parentIndex DosQModelIndex,
+) DosQModelIndex {
+	return C.dos_qabstractlistmodel_index(model, C.int(row), C.int(column), parentIndex)
+}
+
+// QAbstractTableModel 相关字段转换为独立函数
+func DosQAbstractTableModelQMetaObject() DosQMetaObject {
+	return DosQMetaObject(C.dos_qabstracttablemodel_qmetaobject())
+}
+
+func DosQAbstractTableModelCreate(
+	userData unsafe.Pointer,
+	metaObject DosQMetaObject,
+	callback uintptr,
+	modelCallbacks DosQAbstractItemModelCallbacks,
+) DosQAbstractTableModel {
+	return C.dos_qabstracttablemodel_create(userData, unsafe.Pointer(metaObject), C.uintptr_t(callback), modelCallbacks)
+}
+
+func DosQAbstractTableModelParent(model DosQAbstractTableModel, index DosQModelIndex) DosQModelIndex {
+	return C.dos_qabstracttablemodel_parent(model, index)
+}
+
+func DosQAbstractTableModelIndex(
+	model DosQAbstractTableModel,
+	row int,
+	column int,
+	parentIndex DosQModelIndex,
+) DosQModelIndex {
+	return C.dos_qabstracttablemodel_index(model, C.int(row), C.int(column), parentIndex)
 }
 
 func charPtrToString(ptr unsafe.Pointer) string {
@@ -302,22 +724,3 @@ func ptrArrayIndex(array unsafe.Pointer, index int) unsafe.Pointer {
 	elemPtr := unsafe.Pointer(uintptr(array) + uintptr(index)*elemSize)
 	return unsafe.Pointer(*(**int)(elemPtr))
 }
-
-func getSystemLibrary() []string {
-	switch runtime.GOOS {
-	case "windows":
-		return []string{"libDOtherSide.dll", "DOtherSide.dll"}
-	case "linux":
-		return []string{"libDOtherSide.so"}
-	case "darwin":
-		return []string{"libDOtherSide.dylib"}
-	default:
-		panic(fmt.Errorf("GOOS=%s is not supported", runtime.GOOS))
-	}
-}
-
-var dos *Dos = func() *Dos {
-	var dos Dos
-	puregostruct.LoadLibrary(&dos, getSystemLibrary()...)
-	return &dos
-}()

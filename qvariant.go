@@ -5,23 +5,23 @@ type QVariant struct {
 }
 
 func NewQVariantInt(v int) *QVariant {
-	return &QVariant{vptr: dos.QVariantCreateInt(v)}
+	return &QVariant{vptr: DosQVariantCreateInt(v)}
 }
 
 func NewQVariantString(v string) *QVariant {
-	return &QVariant{vptr: dos.QVariantCreateString(v)}
+	return &QVariant{vptr: DosQVariantCreateString(v)}
 }
 
 func NewQVariantBool(v bool) *QVariant {
-	return &QVariant{vptr: dos.QVariantCreateBool(v)}
+	return &QVariant{vptr: DosQVariantCreateBool(v)}
 }
 
 func NewQVariantFloat(v float32) *QVariant {
-	return &QVariant{vptr: dos.QVariantCreateFloat(v)}
+	return &QVariant{vptr: DosQVariantCreateFloat(v)}
 }
 
 func NewQVariantDouble(v float64) *QVariant {
-	return &QVariant{vptr: dos.QVariantCreateDouble(v)}
+	return &QVariant{vptr: DosQVariantCreateDouble(v)}
 }
 
 func NewQVariantFrom(value DosQVariant, takeOwnership Ownership) *QVariant {
@@ -29,14 +29,14 @@ func NewQVariantFrom(value DosQVariant, takeOwnership Ownership) *QVariant {
 	case OwnershipTake:
 		return &QVariant{vptr: value}
 	case OwnershipClone:
-		return &QVariant{vptr: dos.QVariantCreateQVariant(value)}
+		return &QVariant{vptr: DosQVariantCreateQVariant(value)}
 	default:
 		panic("invalid ownership")
 	}
 }
 
 func NewQVariantQObject(obj IQObject) *QVariant {
-	return &QVariant{vptr: dos.QVariantCreateQObject(obj.getVPtr())}
+	return &QVariant{vptr: DosQVariantCreateQObject(obj.getVPtr())}
 }
 
 func NewQVariant(value any) *QVariant {
@@ -59,49 +59,49 @@ func NewQVariant(value any) *QVariant {
 }
 
 func (qvar *QVariant) Delete() {
-	dos.QVariantDelete(qvar.vptr)
+	DosQVariantDelete(qvar.vptr)
 }
 
 func (qvar *QVariant) StringVal() string {
-	ptr := dos.QVariantToString(qvar.vptr)
-	defer dos.CharArrayDelete(ptr)
+	ptr := DosQVariantToString(qvar.vptr)
+	defer DosCharArrayDelete(ptr)
 	return charPtrToString(ptr)
 }
 
 func (qvar *QVariant) SetStringVal(value string) {
-	dos.QVariantSetString(qvar.vptr, value)
+	DosQVariantSetString(qvar.vptr, value)
 }
 
 func (qvar *QVariant) IntVal() int {
-	return dos.QVariantToInt(qvar.vptr)
+	return DosQVariantToInt(qvar.vptr)
 }
 
 func (qvar *QVariant) SetIntVal(value int) {
-	dos.QVariantSetInt(qvar.vptr, value)
+	DosQVariantSetInt(qvar.vptr, value)
 }
 
 func (qvar *QVariant) BoolVal() bool {
-	return dos.QVariantToBool(qvar.vptr)
+	return DosQVariantToBool(qvar.vptr)
 }
 
 func (qvar *QVariant) SetBoolVal(value bool) {
-	dos.QVariantSetBool(qvar.vptr, value)
+	DosQVariantSetBool(qvar.vptr, value)
 }
 
 func (qvar *QVariant) FloatVal() float32 {
-	return dos.QVariantToFloat(qvar.vptr)
+	return DosQVariantToFloat(qvar.vptr)
 }
 
 func (qvar *QVariant) SetFloatVal(value float32) {
-	dos.QVariantSetFloat(qvar.vptr, value)
+	DosQVariantSetFloat(qvar.vptr, value)
 }
 
 func (qvar *QVariant) DoubleVal() float64 {
-	return dos.QVariantToDouble(qvar.vptr)
+	return DosQVariantToDouble(qvar.vptr)
 }
 
 func (qvar *QVariant) SetDoubleVal(value float64) {
-	dos.QVariantSetDouble(qvar.vptr, value)
+	DosQVariantSetDouble(qvar.vptr, value)
 }
 
 func (qvar *QVariant) SetVal(value any) {

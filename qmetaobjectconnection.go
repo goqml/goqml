@@ -11,10 +11,10 @@ func NewQMetaObjectConnection(vptr DosQMetaObjectConnection) *QMetaObjectConnect
 }
 
 func (obj *QMetaObjectConnection) Disconnect() {
-	dos.QObjectDisconnectWithConnectionStatic(obj.vptr)
+	DosQObjectDisconnectWithConnectionStatic(obj.vptr)
 }
 
 func (obj *QMetaObjectConnection) Delete() {
 	obj.Disconnect()
-	dos.QMetaObjectConnectionDelete(obj.vptr)
+	DosQMetaObjectConnectionDelete(obj.vptr)
 }

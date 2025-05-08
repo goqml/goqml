@@ -22,19 +22,19 @@ func NewQUrlWithMode(url string, mode QUrlParsingMode) *QUrl {
 }
 
 func (qurl *QUrl) Setup(url string, mode QUrlParsingMode) {
-	qurl.vptr = dos.QUrlCreate(url, int(mode))
+	qurl.vptr = DosQUrlCreate(url, int(mode))
 }
 
 func (qurl *QUrl) Delete() {
 	if qurl.vptr == nil {
 		return
 	}
-	dos.QUrlDelete(qurl.vptr)
+	DosQUrlDelete(qurl.vptr)
 	qurl.vptr = nil
 }
 
 func (qurl *QUrl) ToString() string {
-	ptr := dos.QUrlToString(qurl.vptr)
-	defer dos.CharArrayDelete(ptr)
+	ptr := DosQUrlToString(qurl.vptr)
+	defer DosCharArrayDelete(ptr)
 	return charPtrToString(ptr)
 }

@@ -27,7 +27,7 @@ type ParameterDefinition struct {
 }
 
 func (d *ParameterDefinition) toDos(pg *util.PinGroup) DosParameterDefinition {
-	return DosParameterDefinition{name: stringToCharPtr(pg, d.Name), metaType: int32(d.MetaType)}
+	return DosParameterDefinition{name: stringToCharPtr(pg, d.Name), metaType: int(d.MetaType)}
 }
 
 type SlotDefinition struct {
@@ -43,8 +43,8 @@ func (d *SlotDefinition) toDos(pg *util.PinGroup) DosSlotDefinition {
 	}
 	return DosSlotDefinition{
 		name:            stringToCharPtr(pg, d.Name),
-		returnMetaType:  int32(d.RetMetaType),
-		parametersCount: int32(len(parameters)),
+		returnMetaType:  int(d.RetMetaType),
+		parametersCount: int(len(parameters)),
 		parameters:      sliceToPtr(pg, parameters),
 	}
 }
@@ -61,7 +61,7 @@ func (d *SignalDefinition) toDos(pg *util.PinGroup) DosSignalDefinition {
 	}
 	return DosSignalDefinition{
 		name:            stringToCharPtr(pg, d.Name),
-		parametersCount: int32(len(parameters)),
+		parametersCount: int(len(parameters)),
 		parameters:      sliceToPtr(pg, parameters),
 	}
 }
@@ -77,7 +77,7 @@ type PropertyDefinition struct {
 func (d *PropertyDefinition) toDos(pg *util.PinGroup) DosPropertyDefinition {
 	return DosPropertyDefinition{
 		name:             stringToCharPtr(pg, d.Name),
-		propertyMetaType: int32(d.MetaType),
+		propertyMetaType: int(d.MetaType),
 		readSlot:         stringToCharPtr(pg, d.Getter),
 		writeSlot:        stringToCharPtr(pg, d.Setter),
 		notifySignal:     stringToCharPtr(pg, d.Emitter),
@@ -86,7 +86,7 @@ func (d *PropertyDefinition) toDos(pg *util.PinGroup) DosPropertyDefinition {
 
 func toQVariantSequence(qs DosQVariantArray, length int, takeOwnership Ownership) []*QVariant {
 	var result []*QVariant
-	qSlice := unsafe.Slice((*uintptr)(qs), length)
+	qSlice := unsafe.Slice(qs, length)
 	for i := 0; i < length; i++ {
 		result = append(result, NewQVariantFrom(DosQVariant(qSlice[i]), takeOwnership))
 	}
@@ -109,7 +109,7 @@ func ConnectWithType[S any, Sender IQObjectPtr[S], R any, Recevier IQObjectPtr[R
 	slotName string,
 	connectionType ConnectionType,
 ) *QMetaObjectConnection {
-	vptr := dos.QObjectConnectStatic(sender.getVPtr(), signalName, receiver.getVPtr(), slotName, int32(connectionType))
+	vptr := DosQObjectConnectStatic(sender.getVPtr(), signalName, receiver.getVPtr(), slotName, int(connectionType))
 	return NewQMetaObjectConnection(vptr)
 }
 
@@ -148,7 +148,7 @@ func ConnectFuncWithType[S any, Sender IQObjectPtr[S]](sender Sender, signalName
 	funcPtr := funcValue.Pointer()
 
 	qLambdaCallbackCache.Set(funcPtr, fn)
-	vptr := dos.QObjectConnectLambdaStatic(sender.getVPtr(), signalName, DosQObjectConnectLambdaCallback(qLambdaCallback), funcPtr, int32(connectionType))
+	vptr := DosQObjectConnectLambdaStatic(sender.getVPtr(), signalName, DosQObjectConnectLambdaCallback(qLambdaCallback), funcPtr, int(connectionType))
 	return NewQMetaObjectConnection(vptr)
 }
 
