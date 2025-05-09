@@ -26,19 +26,21 @@ const (
 var (
 	rootAbstractItemModelMetaObject = NewQAbstractItemModelMetaObject()
 
-	qModelRowCountCallback = purego.NewCallback(func(ptr unsafe.Pointer, rawIndex DosQModelIndex, result *int) {
+	qModelRowCountCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, rawIndex DosQModelIndex, result *int) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		index := NewQModelIndexFromOther(rawIndex, OwnershipClone)
 		*result = model.RowCount(index)
+		return 0
 	})
 
-	qModelColumnCountCallback = purego.NewCallback(func(ptr unsafe.Pointer, rawIndex DosQModelIndex, result *int) {
+	qModelColumnCountCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, rawIndex DosQModelIndex, result *int) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		index := NewQModelIndexFromOther(rawIndex, OwnershipClone)
 		*result = model.ColumnCount(index)
+		return 0
 	})
 
-	qModelDataCallback = purego.NewCallback(func(ptr unsafe.Pointer, rawIndex DosQModelIndex, role int, result DosQVariant) {
+	qModelDataCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, rawIndex DosQModelIndex, role int, result DosQVariant) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		index := NewQModelIndexFromOther(rawIndex, OwnershipClone)
 		qvar := model.Data(index, role)
@@ -46,68 +48,78 @@ var (
 			dos.QVariantAssign(result, qvar.vptr)
 			qvar.Delete()
 		}
+		return 0
 	})
 
-	qModelSetDataCallback = purego.NewCallback(func(ptr unsafe.Pointer, rawIndex DosQModelIndex, rawValue DosQVariant, role int, result *bool) {
+	qModelSetDataCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, rawIndex DosQModelIndex, rawValue DosQVariant, role int, result *bool) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		index := NewQModelIndexFromOther(rawIndex, OwnershipClone)
 		qvar := NewQVariantFrom(rawValue, OwnershipClone)
 		*result = model.SetData(index, qvar, role)
+		return 0
 	})
 
-	qModelRoleNamesCallback = purego.NewCallback(func(ptr unsafe.Pointer, result DosQHashIntByteArray) {
+	qModelRoleNamesCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, result DosQHashIntByteArray) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		roleNames := model.RoleNames()
 		for k, v := range roleNames {
 			dos.QHashIntByteArrayInsert(result, k, v)
 		}
+		return 0
 	})
 
-	qModelFlagsCallback = purego.NewCallback(func(ptr unsafe.Pointer, rawIndex DosQModelIndex, result *int) {
+	qModelFlagsCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, rawIndex DosQModelIndex, result *int) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		index := NewQModelIndexFromOther(rawIndex, OwnershipClone)
 		*result = int(model.Flags(index))
+		return 0
 	})
 
-	qModelHeaderDataCallback = purego.NewCallback(func(ptr unsafe.Pointer, section int, orientation int, role int, result DosQVariant) {
+	qModelHeaderDataCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, section int, orientation int, role int, result DosQVariant) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		qvar := model.HeaderData(section, orientation, role)
 		if qvar != nil {
 			dos.QVariantAssign(result, qvar.vptr)
 			qvar.Delete()
 		}
+		return 0
 	})
 
-	qModelIndexCallback = purego.NewCallback(func(ptr unsafe.Pointer, row int, column int, rawParent DosQModelIndex, result DosQModelIndex) {
+	qModelIndexCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, row int, column int, rawParent DosQModelIndex, result DosQModelIndex) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		parent := NewQModelIndexFromOther(rawParent, OwnershipClone)
 		index := model.Index(row, column, parent)
 		dos.QModelIndexAssign(result, index.vptr)
+		return 0
 	})
 
-	qModelParentCallback = purego.NewCallback(func(ptr unsafe.Pointer, childIndex DosQModelIndex, result DosQModelIndex) {
+	qModelParentCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, childIndex DosQModelIndex, result DosQModelIndex) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		child := NewQModelIndexFromOther(childIndex, OwnershipClone)
 		index := model.Parent(child)
 		dos.QModelIndexAssign(result, index.vptr)
+		return 0
 	})
 
-	qModelHasChildrenCallback = purego.NewCallback(func(ptr unsafe.Pointer, parentIndex DosQModelIndex, result *bool) {
+	qModelHasChildrenCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, parentIndex DosQModelIndex, result *bool) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		parent := NewQModelIndexFromOther(parentIndex, OwnershipClone)
 		*result = model.HasChildren(parent)
+		return 0
 	})
 
-	qModelCanFetchMoreCallback = purego.NewCallback(func(ptr unsafe.Pointer, parentIndex DosQModelIndex, result *bool) {
+	qModelCanFetchMoreCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, parentIndex DosQModelIndex, result *bool) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		parent := NewQModelIndexFromOther(parentIndex, OwnershipClone)
 		*result = model.CanFetchMore(parent)
+		return 0
 	})
 
-	qModelFetchMoreCallback = purego.NewCallback(func(ptr unsafe.Pointer, parentIndex DosQModelIndex) {
+	qModelFetchMoreCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, parentIndex DosQModelIndex) uintptr {
 		model := *(*IQAbstractItemModel)(ptr)
 		index := NewQModelIndexFromOther(parentIndex, OwnershipClone)
 		model.FetchMore(index)
+		return 0
 	})
 )
 
@@ -200,8 +212,8 @@ func (model *QAbstractItemModel) OnSlotCalled(slotName string, arguments []*QVar
 	fmt.Println("ignore QAbstractItemModel slot:", slotName)
 }
 
-func (model *QAbstractItemModel) Setup() {
-	qAIMCallbacks := DosQAbstractItemModelCallbacks{
+func (model *QAbstractItemModel) Setup(inst IQAbstractItemModel) {
+	qAIMCallbacks := &DosQAbstractItemModelCallbacks{
 		RowCount:     DosRowCountCallback(qModelRowCountCallback),
 		ColumnCount:  DosColumnCountCallback(qModelColumnCountCallback),
 		Data:         DosDataCallback(qModelDataCallback),
@@ -215,7 +227,7 @@ func (model *QAbstractItemModel) Setup() {
 		CanFetchMore: DosCanFetchMoreCallback(qModelCanFetchMoreCallback),
 		FetchMore:    DosFetchMoreCallback(qModelFetchMoreCallback),
 	}
-	model.vptr = DosQObject(dos.QAbstractItemModelCreate(unsafe.Pointer(model), model.StaticMetaObject().vptr, qObjectCallback, qAIMCallbacks))
+	model.vptr = DosQObject(dos.QAbstractItemModelCreate(unsafe.Pointer(&inst), inst.StaticMetaObject().vptr, qObjectCallback, qAIMCallbacks))
 }
 
 func (model *QAbstractItemModel) HasIndex(row int, column int, parent *QModelIndex) bool {

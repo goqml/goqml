@@ -44,7 +44,7 @@ func (engine *QQmlApplicationEngine) addImportPath(path string) {
 
 func (engine *QQmlApplicationEngine) SetRootContextProperty(name string, value *QVariant) {
 	ctx := dos.QQmlApplicationEngineContext(engine.vptr)
-	dos.DosQQmlContextSetContextProperty(ctx, name, value.vptr)
+	dos.QQmlContextSetContextProperty(ctx, name, value.vptr)
 }
 
 func (engine *QQmlApplicationEngine) Delete() {

@@ -51,7 +51,7 @@ func NewQVariant(value any) *QVariant {
 		return NewQVariantFloat(value)
 	case float64:
 		return NewQVariantDouble(value)
-	case *QObject:
+	case IQObject:
 		return NewQVariantQObject(value)
 	default:
 		panic("invalid type")

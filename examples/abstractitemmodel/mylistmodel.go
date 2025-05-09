@@ -14,7 +14,7 @@ func NewMyListModel() *MyListModel {
 	model := &MyListModel{
 		Names: []string{"John", "Max", "Paul", "Anna"},
 	}
-	model.Setup()
+	model.Setup(model)
 	return model
 }
 
