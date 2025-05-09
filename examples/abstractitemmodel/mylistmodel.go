@@ -4,6 +4,7 @@ import "github.com/shapled/goqml"
 
 const UserRoleName = goqml.UserRole + 1
 
+// @goqml
 type MyListModel struct {
 	goqml.QAbstractListModel
 
@@ -14,7 +15,7 @@ func NewMyListModel() *MyListModel {
 	model := &MyListModel{
 		Names: []string{"John", "Max", "Paul", "Anna"},
 	}
-	model.Setup(model)
+	model.Setup(model, model.StaticMetaObject())
 	return model
 }
 

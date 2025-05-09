@@ -15,14 +15,32 @@ func parseStructs(node *ast.File) []*StructDef {
 
 	ast.Inspect(node, func(n ast.Node) bool {
 		switch x := n.(type) {
+		case *ast.GenDecl:
+			for _, spec := range x.Specs {
+				typeSpec, ok := spec.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				if _, isStruct := typeSpec.Type.(*ast.StructType); isStruct && x.Doc != nil {
+					for _, c := range x.Doc.List {
+						commentText := strings.TrimSpace(strings.TrimPrefix(c.Text, "//"))
+						if commentText == "@goqml" {
+							structMap[typeSpec.Name.Name] = &StructDef{
+								Name:       typeSpec.Name.Name,
+								ParentType: "goqml.QObject",
+								ParentName: "QObject",
+							}
+							break
+						}
+					}
+				}
+			}
 		case *ast.TypeSpec:
 			if structType, ok := x.Type.(*ast.StructType); ok {
-				structDef := &StructDef{
-					Name:       x.Name.Name,
-					ParentType: fmt.Sprintf("goqml.QObject[*%s]", x.Name.Name),
-					ParentName: "QObject",
+				structDef, ok := structMap[x.Name.Name]
+				if !ok {
+					return true
 				}
-				structMap[x.Name.Name] = structDef
 
 				// Find parent struct and parse properties
 				parentFound := false

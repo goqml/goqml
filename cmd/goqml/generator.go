@@ -105,9 +105,9 @@ func generateCodeContent(pkgName string, structs []*StructDef) string {
 			goBuilder.WriteString(fmt.Sprintf("        {\n"))
 			goBuilder.WriteString(fmt.Sprintf("            Name: \"%s\",\n", prop.Name))
 			goBuilder.WriteString(fmt.Sprintf("            MetaType: goqml.%s,\n", goqml.GetMetaTypeStringFromTypeString(prop.Type.GoTypeName())))
-			goBuilder.WriteString(fmt.Sprintf("            Getter: \"%s\",\n", prop.Getter.Name))
-			goBuilder.WriteString(fmt.Sprintf("            Setter: \"%s\",\n", prop.Setter.Name))
-			goBuilder.WriteString(fmt.Sprintf("            Emitter: \"%s\",\n", prop.Emitter.Name))
+			goBuilder.WriteString(fmt.Sprintf("            Getter: \"%s\",\n", prop.Getter.NameOrEmpty()))
+			goBuilder.WriteString(fmt.Sprintf("            Setter: \"%s\",\n", prop.Setter.NameOrEmpty()))
+			goBuilder.WriteString(fmt.Sprintf("            Emitter: \"%s\",\n", prop.Emitter.NameOrEmpty()))
 			goBuilder.WriteString(fmt.Sprintf("        },\n"))
 		}
 		goBuilder.WriteString("    },\n")
@@ -143,7 +143,9 @@ func generateCodeContent(pkgName string, structs []*StructDef) string {
 				switch prop.Setter.AnnotationType {
 				case PropertyAnnotationTypeMethod:
 					goBuilder.WriteString(fmt.Sprintf("        s.%s(v)\n", prop.Setter.FieldOrMethodName))
-					goBuilder.WriteString(fmt.Sprintf("        s.%s(v)\n", generateSignalMethodName(prop.Emitter.FieldOrMethodName)))
+					if prop.Emitter != nil {
+						goBuilder.WriteString(fmt.Sprintf("        s.%s(v)\n", generateSignalMethodName(prop.Emitter.FieldOrMethodName)))
+					}
 				case PropertyAnnotationTypeField:
 					goBuilder.WriteString(fmt.Sprintf("        if s.%s != v {\n", prop.Setter.FieldOrMethodName))
 					goBuilder.WriteString(fmt.Sprintf("            s.%s = v\n", prop.Setter.FieldOrMethodName))

@@ -26,7 +26,7 @@ func (model *QAbstractListModel) Index(row int, column int, parent *QModelIndex)
 	return NewQModelIndexFromOther(index, OwnershipTake)
 }
 
-func (model *QAbstractListModel) Setup(inst IQAbstractItemModel) {
+func (model *QAbstractListModel) Setup(inst IQAbstractItemModel, meta *QMetaObject) {
 	qAIMCallbacks := &DosQAbstractItemModelCallbacks{
 		RowCount:     DosRowCountCallback(qModelRowCountCallback),
 		ColumnCount:  DosColumnCountCallback(qModelColumnCountCallback),
@@ -41,5 +41,5 @@ func (model *QAbstractListModel) Setup(inst IQAbstractItemModel) {
 		CanFetchMore: DosCanFetchMoreCallback(qModelCanFetchMoreCallback),
 		FetchMore:    DosFetchMoreCallback(qModelFetchMoreCallback),
 	}
-	model.vptr = DosQObject(dos.QAbstractListModelCreate(unsafe.Pointer(&inst), inst.StaticMetaObject().vptr, qObjectCallback, qAIMCallbacks))
+	model.vptr = DosQObject(dos.QAbstractListModelCreate(unsafe.Pointer(&inst), meta.vptr, qIQAbstractItemModel, qAIMCallbacks))
 }

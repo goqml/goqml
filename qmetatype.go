@@ -96,7 +96,7 @@ func GetMetaTypeStringFromTypeString(t string) string {
 		return "QMetaTypeQObjectStar"
 	case "QVariant":
 		return "QMetaTypeQVariant"
-	case "void":
+	case "void", "":
 		return "QMetaTypeVoid"
 	default:
 		return "QMetaTypeUnknownType"

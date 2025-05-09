@@ -41,6 +41,13 @@ type PropertyAccessor struct {
 	FieldOrMethodName string
 }
 
+func (pa *PropertyAccessor) NameOrEmpty() string {
+	if pa == nil {
+		return ""
+	}
+	return pa.Name
+}
+
 type PropertyDef struct {
 	StructName string
 	Name       string

@@ -212,7 +212,7 @@ func (model *QAbstractItemModel) OnSlotCalled(slotName string, arguments []*QVar
 	fmt.Println("ignore QAbstractItemModel slot:", slotName)
 }
 
-func (model *QAbstractItemModel) Setup(inst IQAbstractItemModel) {
+func (model *QAbstractItemModel) Setup(inst IQAbstractItemModel, meta *QMetaObject) {
 	qAIMCallbacks := &DosQAbstractItemModelCallbacks{
 		RowCount:     DosRowCountCallback(qModelRowCountCallback),
 		ColumnCount:  DosColumnCountCallback(qModelColumnCountCallback),
@@ -227,7 +227,7 @@ func (model *QAbstractItemModel) Setup(inst IQAbstractItemModel) {
 		CanFetchMore: DosCanFetchMoreCallback(qModelCanFetchMoreCallback),
 		FetchMore:    DosFetchMoreCallback(qModelFetchMoreCallback),
 	}
-	model.vptr = DosQObject(dos.QAbstractItemModelCreate(unsafe.Pointer(&inst), inst.StaticMetaObject().vptr, qObjectCallback, qAIMCallbacks))
+	model.vptr = DosQObject(dos.QAbstractItemModelCreate(unsafe.Pointer(&inst), meta.vptr, qIQAbstractItemModel, qAIMCallbacks))
 }
 
 func (model *QAbstractItemModel) HasIndex(row int, column int, parent *QModelIndex) bool {
@@ -277,3 +277,9 @@ func (model *QAbstractItemModel) EndResetModel() {
 func (model *QAbstractItemModel) DataChanged(topLeft *QModelIndex, bottomRight *QModelIndex, roles []int) {
 	dos.QAbstractItemModelDataChanged(DosQAbstractItemModel(model.vptr), topLeft.vptr, bottomRight.vptr, sliceToPtr(nil, roles), len(roles))
 }
+
+var qIQAbstractItemModel = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) uintptr {
+	obj := *(*IQAbstractItemModel)(ptr)
+	qObjectCallback(obj, slotNamePtr, dosArgumentsLength, dosArguments)
+	return 0
+})

@@ -2,6 +2,7 @@ package main
 
 import "github.com/shapled/goqml"
 
+// @goqml
 type Contact struct {
 	goqml.QObject
 

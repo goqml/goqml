@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/shapled/goqml/util"
 )
 
 type (
@@ -53,10 +54,12 @@ func (obj *QObject) StaticMetaObject() *QMetaObject {
 
 func (obj *QObject) Setup(inst IQObject, meta *QMetaObject) {
 	obj.owner = true
-	obj.vptr = dos.QObjectCreate(unsafe.Pointer(&inst), meta.vptr, DosQObjectCallBack(qObjectCallback))
+	obj.vptr = dos.QObjectCreate(unsafe.Pointer(&inst), meta.vptr, DosQObjectCallBack(qIObjectCallback))
+	util.Pin(obj)
 }
 
 func (obj *QObject) Delete() {
+	util.Unpin(obj)
 	if obj.vptr == nil || !obj.owner {
 		return
 	}
@@ -96,9 +99,9 @@ func (obj *QObject) OnSlotCalled(slotName string, arguments []*QVariant) {
 	fmt.Println("ignore QObject slot:", slotName)
 }
 
-var qObjectCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) uintptr {
-	obj := *(*IQObject)(ptr)
-
+func qObjectCallback[T interface {
+	OnSlotCalled(slotName string, arguments []*QVariant)
+}](obj T, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) {
 	slotName := NewQVariantFrom(slotNamePtr, OwnershipClone)
 	defer slotName.Delete()
 
@@ -113,5 +116,10 @@ var qObjectCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer
 
 	dosArgs := unsafe.Slice((*uintptr)(dosArguments), dosArgumentsLength)
 	dos.QVariantAssign(DosQVariant(dosArgs[0]), arguments[0].vptr)
+}
+
+var qIObjectCallback = purego.NewCallback(func(_ purego.CDecl, ptr unsafe.Pointer, slotNamePtr DosQVariant, dosArgumentsLength int, dosArguments DosQVariantArray) uintptr {
+	obj := *(*IQObject)(ptr)
+	qObjectCallback(obj, slotNamePtr, dosArgumentsLength, dosArguments)
 	return 0
 })

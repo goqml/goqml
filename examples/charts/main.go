@@ -17,6 +17,6 @@ func main() {
 	defer variant.Delete()
 
 	engine.SetRootContextProperty("myListModel", variant)
-	engine.Load("examples/abstractitemmodel/main.qml")
+	engine.Load("examples/charts/main.qml")
 	app.Exec()
 }
