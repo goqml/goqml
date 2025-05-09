@@ -31,7 +31,7 @@ func NewQMetaType(t string) QMetaType {
 		return QMetaTypeQString
 	case "*QObject":
 		return QMetaTypeQObjectStar
-	case "QVariant":
+	case "QVariant", "*QVariant":
 		return QMetaTypeQVariant
 	case "void":
 		return QMetaTypeVoid

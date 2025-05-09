@@ -58,16 +58,21 @@ func generateCodeContent(pkgName string, structs []*StructDef) string {
 
 		// 生成 property 的 Emitter 方法
 		for _, prop := range s.Properties {
-			if prop.Emitter.AnnotationType == PropertyAnnotationTypeMethod {
-				emitterMethod := fmt.Sprintf("func (s *%s) %s(%s) {\n", s.Name, generateSignalMethodName(prop.Emitter.FieldOrMethodName), "v "+prop.Type.GoTypeName())
-				emitterMethod += fmt.Sprintf("    s.Emit(\"%s\", goqml.NewQVariant(v))\n", prop.Emitter.Name)
-				emitterMethod += "}\n\n"
-				goBuilder.WriteString(emitterMethod)
-			} else if prop.Emitter.AnnotationType == PropertyAnnotationTypeField {
-				emitterMethod := fmt.Sprintf("func (s *%s) %s(value %s) {\n", s.Name, generateSignalMethodName(prop.Name), prop.Type.GoTypeName())
-				emitterMethod += fmt.Sprintf("    s.Emit(\"%s\", goqml.NewQVariant(value))\n", prop.Emitter.Name)
-				emitterMethod += "}\n\n"
-				goBuilder.WriteString(emitterMethod)
+			if prop.Emitter != nil {
+				switch prop.Emitter.AnnotationType {
+				case PropertyAnnotationTypeMethod:
+					emitterMethod := fmt.Sprintf("func (s *%s) %s(%s) {\n", s.Name, generateSignalMethodName(prop.Emitter.FieldOrMethodName), "v "+prop.Type.GoTypeName())
+					emitterMethod += fmt.Sprintf("    s.Emit(\"%s\", goqml.NewQVariant(v))\n", prop.Emitter.Name)
+					emitterMethod += "}\n\n"
+					goBuilder.WriteString(emitterMethod)
+				case PropertyAnnotationTypeField:
+					emitterMethod := fmt.Sprintf("func (s *%s) %s(value %s) {\n", s.Name, generateSignalMethodName(prop.Name), prop.Type.GoTypeName())
+					emitterMethod += fmt.Sprintf("    s.Emit(\"%s\", goqml.NewQVariant(value))\n", prop.Emitter.Name)
+					emitterMethod += "}\n\n"
+					goBuilder.WriteString(emitterMethod)
+				default:
+					panic("unsupported property emitter type")
+				}
 			}
 		}
 
@@ -81,7 +86,7 @@ func generateCodeContent(pkgName string, structs []*StructDef) string {
 			goBuilder.WriteString(fmt.Sprintf("            Name: \"%s\",\n", signal.Name))
 			goBuilder.WriteString(fmt.Sprintf("            Params: []*goqml.ParameterDefinition{\n"))
 			for _, param := range signal.Params {
-				goBuilder.WriteString(fmt.Sprintf("                {Name: \"%s\", Type: goqml.%s},\n", param.Name, goqml.GetMetaTypeStringFromTypeString(param.Type)))
+				goBuilder.WriteString(fmt.Sprintf("                {Name: \"%s\", MetaType: goqml.%s},\n", param.Name, goqml.GetMetaTypeStringFromTypeString(param.Type)))
 			}
 			goBuilder.WriteString(fmt.Sprintf("            },\n"))
 			goBuilder.WriteString(fmt.Sprintf("        },\n"))
@@ -94,7 +99,7 @@ func generateCodeContent(pkgName string, structs []*StructDef) string {
 			goBuilder.WriteString(fmt.Sprintf("            RetMetaType: goqml.%s,\n", goqml.GetMetaTypeStringFromTypeString(slot.ReturnType)))
 			goBuilder.WriteString(fmt.Sprintf("            Params: []*goqml.ParameterDefinition{\n"))
 			for _, param := range slot.Params {
-				goBuilder.WriteString(fmt.Sprintf("                {Name: \"%s\", Type: goqml.%s},\n", param.Name, goqml.GetMetaTypeStringFromTypeString(param.Type)))
+				goBuilder.WriteString(fmt.Sprintf("                {Name: \"%s\", MetaType: goqml.%s},\n", param.Name, goqml.GetMetaTypeStringFromTypeString(param.Type)))
 			}
 			goBuilder.WriteString(fmt.Sprintf("            },\n"))
 			goBuilder.WriteString(fmt.Sprintf("        },\n"))
@@ -203,7 +208,7 @@ func generateQMetaType(typeName string) string {
 func generateSlotArguments(slot *SlotDef) string {
 	args := []string{}
 	for i, param := range slot.Params {
-		args = append(args, fmt.Sprintf("arguments[%d].To%s()", i+1, strings.Title(param.Type)))
+		args = append(args, fmt.Sprintf("arguments[%d].%sVal()", i+1, strings.Title(param.Type)))
 	}
 	return strings.Join(args, ", ")
 }

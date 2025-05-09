@@ -104,6 +104,10 @@ func (qvar *QVariant) SetDoubleVal(value float64) {
 	dos.QVariantSetDouble(qvar.vptr, value)
 }
 
+func (qvar *QVariant) SetQVariantVal(value *QVariant) {
+	dos.QVariantAssign(qvar.vptr, value.vptr)
+}
+
 func (qvar *QVariant) SetVal(value any) {
 	switch value := value.(type) {
 	case int:
@@ -116,6 +120,8 @@ func (qvar *QVariant) SetVal(value any) {
 		qvar.SetFloatVal(value)
 	case float64:
 		qvar.SetDoubleVal(value)
+	case *QVariant:
+		qvar.SetQVariantVal(value)
 	default:
 		panic("invalid type")
 	}
