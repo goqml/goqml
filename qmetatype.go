@@ -29,7 +29,7 @@ func NewQMetaType(t string) QMetaType {
 		return QMetaTypeFloat
 	case "string":
 		return QMetaTypeQString
-	case "*QObject":
+	case "QObject", "*QObject":
 		return QMetaTypeQObjectStar
 	case "QVariant", "*QVariant":
 		return QMetaTypeQVariant
@@ -92,9 +92,9 @@ func GetMetaTypeStringFromTypeString(t string) string {
 		return "QMetaTypeFloat"
 	case "string":
 		return "QMetaTypeQString"
-	case "*QObject":
+	case "*QObject", "*goqml.QObject":
 		return "QMetaTypeQObjectStar"
-	case "QVariant":
+	case "QVariant", "*QVariant", "goqml.QVariant", "*goqml.QVariant":
 		return "QMetaTypeQVariant"
 	case "void", "":
 		return "QMetaTypeVoid"

@@ -128,7 +128,11 @@ func generateCodeContent(pkgName string, structs []*StructDef) string {
 		goBuilder.WriteString("    switch slotName {\n")
 		for _, slot := range s.Slots {
 			goBuilder.WriteString(fmt.Sprintf("    case \"%s\":\n", slot.Name))
-			goBuilder.WriteString(fmt.Sprintf("        s.%s(%s)\n", slot.MethodName, generateSlotArguments(slot)))
+			if slot.ReturnType != "" {
+				goBuilder.WriteString(fmt.Sprintf("        arguments[0].SetVal(s.%s(%s))\n", slot.MethodName, generateSlotArguments(slot)))
+			} else {
+				goBuilder.WriteString(fmt.Sprintf("        s.%s(%s)\n", slot.MethodName, generateSlotArguments(slot)))
+			}
 		}
 		for _, prop := range s.Properties {
 			if prop.Getter != nil {

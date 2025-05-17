@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
+	"go/printer"
+	"go/token"
 	"regexp"
 	"strings"
 
@@ -186,9 +189,10 @@ func parseSlotDef(comment string, structName string, funcDecl *ast.FuncDecl) *Sl
 	}
 
 	if funcType.Results != nil && len(funcType.Results.List) > 0 {
-		if ident, ok := funcType.Results.List[0].Type.(*ast.Ident); ok {
-			returnType = ident.Name
+		if len(funcType.Results.List) != 1 {
+			panic("Multiple return values not supported")
 		}
+		returnType = exprToString(funcType.Results.List[0].Type)
 	}
 
 	return &SlotDef{
@@ -237,17 +241,19 @@ func parseSignalDef(comment string, structName string, field *ast.Field) *Signal
 }
 
 func parseFieldPropertyDef(comment string, structName string, field *ast.Field) *PropertyDef {
-	re := regexp.MustCompile(`@goqml\.property\s*(\("(.*)"\))?`)
+	re := regexp.MustCompile(`@goqml\.property\s*(\("(.+)"\))?`)
 	match := re.FindStringSubmatch(comment)
 	fieldName := field.Names[0].Name
 	name := fieldName
-	if len(match) > 2 && match[2] != "" {
+	if len(match) > 2 {
 		name = match[2]
 	}
 
 	propertyType := goqml.QMetaTypeUnknownType
 	if ident, ok := field.Type.(*ast.Ident); ok {
 		propertyType = goqml.NewQMetaType(ident.Name)
+	} else {
+		panic("Invalid property type")
 	}
 
 	return &PropertyDef{
@@ -380,4 +386,10 @@ func getTypeName(expr ast.Expr) string {
 
 func getMetaTypeName(expr ast.Expr) goqml.QMetaType {
 	return goqml.NewQMetaType(getTypeName(expr))
+}
+
+func exprToString(expr ast.Expr) string {
+	var buf bytes.Buffer
+	printer.Fprint(&buf, token.NewFileSet(), expr)
+	return buf.String()
 }
