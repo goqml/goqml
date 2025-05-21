@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 //go:generate rcc --binary ./resources.qrc -o main.rcc

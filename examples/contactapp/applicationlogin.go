@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 // @goqml

@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 func parseStructs(node *ast.File) []*StructDef {

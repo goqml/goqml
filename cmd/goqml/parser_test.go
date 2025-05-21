@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 func TestParseStructs(t *testing.T) {
@@ -22,7 +22,7 @@ func TestParseStructs(t *testing.T) {
 			input: `
 package main
 
-import "github.com/shapled/goqml"
+import "github.com/goqml/goqml"
 
 type MyStruct struct {
 	goqml.QObject
@@ -87,7 +87,7 @@ func (*MyStruct) MySignal(y string)
 			input: `
 package main
 
-import "github.com/shapled/goqml"
+import "github.com/goqml/goqml"
 
 type CustomStruct struct {
 	goqml.QObject
@@ -152,7 +152,7 @@ func (*CustomStruct) MySignal(z bool)
 			input: `
 package main
 
-import "github.com/shapled/goqml"
+import "github.com/goqml/goqml"
 
 type PropertyStruct struct {
 	goqml.QObject
@@ -203,7 +203,7 @@ func (s *PropertyStruct) P1Changed(value int)
 			input: `
 package main
 
-import "github.com/shapled/goqml"
+import "github.com/goqml/goqml"
 
 type NamedPropertyStruct struct {
 	goqml.QObject
@@ -254,7 +254,7 @@ func (s *NamedPropertyStruct) CustomEmitter(value int)
 			input: `
 package main
 
-import "github.com/shapled/goqml"
+import "github.com/goqml/goqml"
 
 type GetterStruct struct {
 	goqml.QObject

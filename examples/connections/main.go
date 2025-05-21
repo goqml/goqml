@@ -1,6 +1,6 @@
 package main
 
-import "github.com/shapled/goqml"
+import "github.com/goqml/goqml"
 
 func assert(condition bool, msg string) {
 	if !condition {

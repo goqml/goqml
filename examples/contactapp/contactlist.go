@@ -1,6 +1,6 @@
 package main
 
-import "github.com/shapled/goqml"
+import "github.com/goqml/goqml"
 
 const (
 	FirstName = goqml.UserRole + 1

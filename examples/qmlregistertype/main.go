@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 //go:generate go run ../../cmd/goqml gen -f ./contact.go

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 // @goqml

@@ -1,6 +1,6 @@
 package goqml
 
-import "github.com/shapled/goqml/util"
+import "github.com/goqml/goqml/util"
 
 type QMetaObject struct {
 	vptr       DosQMetaObject

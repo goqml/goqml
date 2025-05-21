@@ -7,8 +7,8 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+	"github.com/goqml/goqml/util"
 	cmap "github.com/orcaman/concurrent-map/v2"
-	"github.com/shapled/goqml/util"
 )
 
 type ConnectionType int

@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/shapled/goqml/util"
+	"github.com/goqml/goqml/util"
 	"github.com/shapled/puregostruct"
 )
 

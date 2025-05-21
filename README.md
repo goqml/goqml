@@ -7,7 +7,7 @@ Developing, **not** ready for production.
 ## Install
 
 ```bash
-go get github.com/shapled/goqml@latest
+go get github.com/goqml/goqml@latest
 ```
 
 ## Demo
@@ -18,7 +18,7 @@ main.go
 package main
 
 import (
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 func main() {

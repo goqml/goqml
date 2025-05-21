@@ -1,6 +1,6 @@
 package main
 
-import "github.com/shapled/goqml"
+import "github.com/goqml/goqml"
 
 //go:generate go run ../../cmd/goqml gen -f ./mylistmodel.go
 func main() {

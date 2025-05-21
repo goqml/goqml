@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 func TestGenerateCodeContent(t *testing.T) {

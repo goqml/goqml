@@ -3,7 +3,7 @@ package main
 import (
 	"math/rand"
 
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 type Point struct {

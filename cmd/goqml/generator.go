@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/shapled/goqml"
+	"github.com/goqml/goqml"
 )
 
 func generateCode(pkgName string, structs []*StructDef, output string, force bool) {
@@ -30,7 +30,7 @@ func generateCodeContent(pkgName string, structs []*StructDef) string {
 	goBuilder.WriteString("package " + pkgName + "\n\n")
 	goBuilder.WriteString("import (\n")
 	goBuilder.WriteString("    \"fmt\"\n\n")
-	goBuilder.WriteString("    \"github.com/shapled/goqml\"\n")
+	goBuilder.WriteString("    \"github.com/goqml/goqml\"\n")
 	goBuilder.WriteString(")\n\n")
 
 	for _, s := range structs {

@@ -6,7 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
-	"github.com/shapled/goqml/util"
+	"github.com/goqml/goqml/util"
 )
 
 type (
